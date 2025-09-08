@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 const games = [
@@ -65,90 +66,122 @@ const games = [
       { id: 1548, name: "Sports" },
     ],
   },
+  {
+    id: "10000326126020",
+    name: "Gotham Knights | Deluxe Edition (Xbox Series X/S, Windows 10)",
+    minPrice: 23.6,
+    release_date: "2022-10-21",
+    developer: "WB Games Montréal",
+    publisher: "WB Games",
+    availableToBuy: true,
+    coverImage:
+      "https://images.g2a.com/g2a/0x0/1x1x1/2a9a9b18a8ea/4cc70c286fbe4652abf1b76d",
+    categories: [
+      { id: 189, name: "Games" },
+      { id: 1545, name: "Adventure" },
+      { id: 1550, name: "RPG" },
+      { id: 2699, name: "Action" },
+    ],
+  },
+  {
+    id: "10000326126020",
+    name: "Gotham Knights | Deluxe Edition (Xbox Series X/S, Windows 10)",
+    minPrice: 23.6,
+    release_date: "2022-10-21",
+    developer: "WB Games Montréal",
+    publisher: "WB Games",
+    availableToBuy: true,
+    coverImage:
+      "https://images.g2a.com/g2a/0x0/1x1x1/2a9a9b18a8ea/4cc70c286fbe4652abf1b76d",
+    categories: [
+      { id: 189, name: "Games" },
+      { id: 1545, name: "Adventure" },
+      { id: 1550, name: "RPG" },
+      { id: 2699, name: "Action" },
+    ],
+  },
 ];
 
 export default function Bestsellers() {
   return (
-    <section className="w-full flex justify-center py-10">
-      <div className="w-full max-w-[1170px] px-4">
+    <section className="w-full flex justify-center py-8 lg:py-10">
+      <div className="w-full max-w-7xl px-6">
         <div className="mb-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">Bestsellers</h2>
+            <h2 className="text-xl lg:text-2xl font-bold text-gray-900">Bestsellers</h2>
             <Link href="#" className="text-sm text-gray-700 hover:text-black">
               See all
             </Link>
           </div>
-          
+
           <p className="text-sm text-gray-500 mt-1">
             Explore the most popular game keys trending this week. Grab your
             favorites before they sell out!
           </p>
         </div>
+        <div className="overflow-x-auto">
+          <div className="flex gap-3 w-max lg:grid lg:grid-cols-4 lg:gap-6 lg:w-auto">
+            {games.map((game) => (
+              <div
+                key={game.id}
+                className="bg-white w-[220px] flex-shrink-0 lg:w-auto shadow-md rounded-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col"
+              >
+                <Image
+                  src={game.coverImage}
+                  alt={game.name}
+                  width={400}
+                  height={400}
+                  className="w-full h-48 object-cover"
+                />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {games.map((game) => (
-            <div
-              key={game.id}
-              className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col"
-            >
-              
-              <img
-                src={game.coverImage}
-                alt={game.name}
-                className="w-full h-48 object-cover"
-              />
+                <div className="p-2 lg:p-4 flex flex-col flex-1">
+                  <h3 className="text-base lg:text-lg font-bold mb-2 line-clamp-3 leading-tight">
+                    {game.name}
+                  </h3>
 
-              
-              <div className="p-4 flex flex-col flex-1">
-                <h3 className="text-lg font-bold mb-2 line-clamp-3">
-                  {game.name}
-                </h3>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {game.categories.map((cat) => (
+                      <span
+                        key={cat.id}
+                        className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded"
+                      >
+                        {cat.name}
+                      </span>
+                    ))}
+                  </div>
 
-               
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {game.categories.map((cat) => (
-                    <span
-                      key={cat.id}
-                      className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded"
-                    >
-                      {cat.name}
-                    </span>
-                  ))}
-                </div>
-
-                
-                <p className="text-gray-600 text-sm mb-1 truncate">
-                  Developer:{" "}
-                  <span className="font-medium">{game.developer}</span>
-                </p>
-                <p className="text-gray-600 text-sm mb-1 truncate">
-                  Publisher:{" "}
-                  <span className="font-medium">{game.publisher}</span>
-                </p>
-                <p className="text-gray-600 text-sm mb-3">
-                  Release:{" "}
-                  <span className="font-medium">{game.release_date}</span>
-                </p>
-
-                
-                <div className="mt-auto">
-                  <p className="text-gray-900 font-bold text-lg mb-2">
-                    ${game.minPrice}
+                  <p className="text-gray-600 text-sm mb-1 truncate">
+                    Developer:{" "}
+                    <span className="font-medium">{game.developer}</span>
                   </p>
-                  <button
-                    disabled={!game.availableToBuy}
-                    className={`w-full py-2 rounded text-white font-medium ${
-                      game.availableToBuy
-                        ? "bg-blue-600 hover:bg-blue-700"
-                        : "bg-gray-400 cursor-not-allowed"
-                    }`}
-                  >
-                    {game.availableToBuy ? "Buy Now" : "Unavailable"}
-                  </button>
+                  <p className="text-gray-600 text-sm mb-1 truncate">
+                    Publisher:{" "}
+                    <span className="font-medium">{game.publisher}</span>
+                  </p>
+                  <p className="text-gray-600 text-sm mb-3">
+                    Release:{" "}
+                    <span className="font-medium">{game.release_date}</span>
+                  </p>
+
+                  <div className="mt-auto">
+                    <p className="text-gray-900 font-bold text-lg mb-2">
+                      ${game.minPrice}
+                    </p>
+                    <button
+                      disabled={!game.availableToBuy}
+                      className={`w-full py-2 rounded text-white font-medium ${
+                        game.availableToBuy
+                          ? "bg-blue-600 hover:bg-blue-700"
+                          : "bg-gray-400 cursor-not-allowed"
+                      }`}
+                    >
+                      {game.availableToBuy ? "Buy Now" : "Unavailable"}
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </section>

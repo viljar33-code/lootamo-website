@@ -2,8 +2,8 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-50 border-t mt-12">
-      <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-1 md:grid-cols-3 gap-6">
+    <footer className="border-t mt-12">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-10 grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
           <h4 className="font-bold">Lootamo</h4>
           <p className="text-sm text-gray-600 mt-2">Find the best digital deals — keys, gift cards and more.</p>

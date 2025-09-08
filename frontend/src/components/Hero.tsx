@@ -4,10 +4,10 @@ import Link from "next/link";
 export default function Hero() {
   return (
     <section className="bg-myGradient text-white">
-      <div className="max-w-7xl mx-auto px-4 py-20">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-20">
         <div className="flex flex-col lg:flex-row items-center gap-8">
           <div className="flex-1">
-            <h1 className="text-3xl sm:text-5xl font-extrabold leading-tight">
+            <h1 className="text-3xl sm:text-4xl font-extrabold leading-tight">
               Lootamo — Best deals on game keys, subscriptions & more
             </h1>
             <p className="mt-4 text-lg md:max-w-xl">

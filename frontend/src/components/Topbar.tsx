@@ -5,7 +5,7 @@ import { MdLanguage, MdAttachMoney } from "react-icons/md";
 export default function Topbar() {
   return (
     <div className="bg-gray-900 text-gray-100 text-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-9">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-9">
         <div className="flex items-center gap-3">
           <span className="hidden sm:flex items-center gap-2">
             <IoGameController className="text-lg" />

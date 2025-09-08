@@ -30,7 +30,7 @@ export default function Signin() {
         <div className="w-full max-w-md">
           <div className="bg-white/90 backdrop-blur rounded-2xl shadow-xl ring-1 ring-gray-100 overflow-hidden">
             <div className="px-6 pt-6 pb-4 text-center">
-              <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
+              <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Welcome back</h1>
               <p className="mt-1 text-sm text-gray-500">Sign in to continue</p>
             </div>
 

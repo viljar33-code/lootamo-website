@@ -2,6 +2,13 @@ import { FaWindows, FaXbox, FaPlaystation } from "react-icons/fa";
 import { SiNintendoswitch } from "react-icons/si";
 import Bestsellers from "./Bestsellers";
 import RandomKeys from "./RandomKeys";
+import Image from "next/image";
+import UpcomingGames from "./UpcomingGames";
+import BacktoSchool from "./BacktoSchool";
+import TrendingCategories from "./TrendingCategories";
+import Software from "./Software";
+import PopularGameKeys from "./PopularGameKeys";
+import GameAccounts from "./GameAccounts";
 
 export default function ChoosePlatform() {
   const platforms = [
@@ -43,10 +50,10 @@ export default function ChoosePlatform() {
   ];
 
   const handleScrollTo = (id: string) => (e: { preventDefault: () => void; }) => {
-    e.preventDefault(); // prevent default anchor behavior
+    e.preventDefault();
     const element = document.getElementById(id);
     if (element) {
-      const yOffset = 170; // height of your sticky nav
+      const yOffset = window.innerWidth < 1024 ? 150 : 170;
       const y =
         element.getBoundingClientRect().top + window.pageYOffset - yOffset;
       window.scrollTo({ top: y, behavior: "smooth" });
@@ -56,7 +63,7 @@ export default function ChoosePlatform() {
   return (
     <>
       <section className="relative flex w-full justify-center">
-        <div className="relative flex flex-col w-full max-w-[1170px] text-left">
+        <div className="relative flex flex-col w-full max-w-7xl text-left">
           <div className="flex items-center gap-8 lg:gap-24 py-6 px-6 flex-wrap">
             <p className="text-[26px] leading-[38px] font-bold shrink-0">
               Choose your platform
@@ -77,7 +84,8 @@ export default function ChoosePlatform() {
           </div>
         </div>
       </section>
-      <section className="w-full overflow-x-auto max-w-[1200px] mx-auto flex bg-white border-b border-gray-200 sticky top-[70px] z-10 shadow-lg">
+
+      <section className="w-full overflow-x-auto max-w-[1232px] mx-auto flex bg-white border-b border-gray-200 sticky top-[64px] z-10 shadow-lg">
         <nav className="py-4 px-4 w-full">
           <div className="flex items-center scrollbar-hide w-full">
             <ul className="flex items-center justify-around gap-1 w-full">
@@ -89,9 +97,11 @@ export default function ChoosePlatform() {
                     className="group relative flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 hover:text-blue-600 transition-all duration-200 whitespace-nowrap rounded-lg hover:bg-blue-50"
                   >
                     {item.icon && (
-                      <img
+                      <Image
                         src={item.icon}
                         alt={item.name}
+                        width={20}
+                        height={20}
                         className="w-5 h-5 rounded-full object-cover"
                       />
                     )}
@@ -110,6 +120,24 @@ export default function ChoosePlatform() {
       </section>
       <section id="random-keys">
         <RandomKeys />
+      </section>
+      <section id="upcoming">
+        <UpcomingGames />
+      </section>
+      <section id="back-to-school">
+        <BacktoSchool />
+      </section>
+      <section id="trending">
+        <TrendingCategories />
+      </section>
+      <section id="software">
+        <Software />
+      </section>
+      <section id="popular">
+        <PopularGameKeys />
+      </section>
+      <section id="accounts">
+        <GameAccounts />
       </section>
     </>
   );

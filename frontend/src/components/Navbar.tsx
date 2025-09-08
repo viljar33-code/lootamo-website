@@ -15,7 +15,7 @@ export default function Navbar() {
 
   return (
     <header className={`top-0 z-40 sticky transition-shadow ${scrolled ? "shadow-md bg-white/90 backdrop-blur-sm" : "bg-transparent"}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-4">
             <Link href="/" className="flex items-center gap-3">

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import React from "react";
 
 export default function GameCard() {
@@ -22,9 +23,11 @@ export default function GameCard() {
   return (
     <>
       <div className="bg-white shadow-lg rounded-lg overflow-hidden max-w-xs">
-        <img
+        <Image
           src={game.coverImage}
           alt={game.name}
+          width={400}
+          height={400}
           className="w-full h-48 object-cover"
         />
         <div className="p-4">
