@@ -95,7 +95,7 @@ export default function Register() {
                   />
                 </div>
 
-                <label className="flex items-center gap-2 text-xs text-gray-600">
+                <label className="flex items-center gap-2 text-xs text-gray-600 text-nowrap flex-wrap">
                   <input
                     type="checkbox"
                     checked={agree}
@@ -105,7 +105,7 @@ export default function Register() {
                   I agree to the
                   <a href="#" className="underline"> Terms of Service </a>
                   and
-                  <a href="#" className="underline"> Privacy Policy</a>.
+                  <a href="#" className="underline"> Privacy Policy</a>
                 </label>
 
                 <button
@@ -132,7 +132,7 @@ export default function Register() {
                   Google
                 </button>
                 <button className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm hover:bg-gray-50">
-                  <FaFacebook className="text-gray-900" />
+                  <FaFacebook className="text-lg" color="blue"/>
                   Facebook
                 </button>
               </div>

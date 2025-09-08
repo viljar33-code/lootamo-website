@@ -87,7 +87,7 @@ export default function Signin() {
                   Google
                 </button>
                 <button className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm hover:bg-gray-50">
-                  <FaFacebook className="text-gray-900" />
+                  <FaFacebook className="text-lg" color="blue"/>
                   Facebook
                 </button>
               </div>

@@ -1,4 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
+import { FaStar } from "react-icons/fa";
 
 const games = [
   {
@@ -67,13 +69,13 @@ const games = [
   },
 ];
 
-export default function Bestsellers() {
+export default function BacktoSchool() {
   return (
-    <section className="w-full flex justify-center py-10">
+    <section className="w-full flex justify-center py-10 bg-gray-50">
       <div className="w-full max-w-[1170px] px-4">
         <div className="mb-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">Bestsellers</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Back to School</h2>
             <Link href="#" className="text-sm text-gray-700 hover:text-black">
               See all
             </Link>
@@ -92,11 +94,15 @@ export default function Bestsellers() {
               className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col"
             >
               
-              <img
-                src={game.coverImage}
-                alt={game.name}
-                className="w-full h-48 object-cover"
-              />
+              <div className="relative w-full h-48">
+                <Image
+                  src={game.coverImage}
+                  alt={game.name}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                />
+              </div>
 
               
               <div className="p-4 flex flex-col flex-1">

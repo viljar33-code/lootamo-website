@@ -1,4 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
+import { FaStar } from "react-icons/fa";
 
 const games = [
   {
@@ -67,13 +69,13 @@ const games = [
   },
 ];
 
-export default function Bestsellers() {
+export default function RandomKeys() {
   return (
-    <section className="w-full flex justify-center py-10">
+    <section className="w-full flex justify-center py-10 bg-gray-50">
       <div className="w-full max-w-[1170px] px-4">
         <div className="mb-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">Bestsellers</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Random Keys</h2>
             <Link href="#" className="text-sm text-gray-700 hover:text-black">
               See all
             </Link>

@@ -67,18 +67,20 @@ const games = [
   },
 ];
 
-export default function Bestsellers() {
+export default function Software() {
   return (
     <section className="w-full flex justify-center py-10">
       <div className="w-full max-w-[1170px] px-4">
         <div className="mb-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">Bestsellers</h2>
+            <h2 className="text-2xl font-bold text-gray-900">
+            Software
+            </h2>
             <Link href="#" className="text-sm text-gray-700 hover:text-black">
               See all
             </Link>
           </div>
-          
+
           <p className="text-sm text-gray-500 mt-1">
             Explore the most popular game keys trending this week. Grab your
             favorites before they sell out!
