@@ -85,7 +85,7 @@ export default function ChoosePlatform() {
         </div>
       </section>
 
-      <section className="w-full overflow-x-auto max-w-[1232px] mx-auto flex bg-white border-b border-gray-200 sticky top-[64px] z-10 shadow-lg">
+      <section className="w-full overflow-x-auto max-w-[1232px] mx-auto flex bg-gray-100 border-b border-gray-200 sticky top-[64px] z-10 shadow-lg rounded-b-2xl">
         <nav className="py-4 px-4 w-full">
           <div className="flex items-center scrollbar-hide w-full">
             <ul className="flex items-center justify-around gap-1 w-full">

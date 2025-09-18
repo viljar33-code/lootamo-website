@@ -38,3 +38,15 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+
+## Environment
+
+Configure the frontend API base URL using a public env var. Create a `.env.local` file in the `frontend/` directory with:
+
+```
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
+- This is used by the frontend HTTP client to call the backend (FastAPI).
+- For production, set `NEXT_PUBLIC_API_URL` to your deployed API root.
+

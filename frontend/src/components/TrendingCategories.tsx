@@ -86,11 +86,11 @@ export default function TrendingCategories() {
         </div>
 
       <div className="overflow-x-auto">
-                <div className="flex gap-3 w-max lg:grid lg:grid-cols-4 lg:gap-6 lg:w-auto">
+                <div className="flex gap-x-3 gap-y-16 w-max lg:grid lg:grid-cols-4 lg:gap-x-6 lg:w-auto">
                   {games.map((game) => (
                     <div
                       key={game.id}
-                      className="bg-white w-[220px] flex-shrink-0 lg:w-auto shadow-md rounded-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col"
+                      className="bg-white w-[220px] flex-shrink-0 lg:w-auto shadow-md rounded-2xl overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col"
                     >
                       <Image
                         src={game.coverImage}

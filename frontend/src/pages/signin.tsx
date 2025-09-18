@@ -1,22 +1,120 @@
 import Link from "next/link";
 import Head from "next/head";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa6";
+import { useRouter } from "next/router";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/components/ToastProvider";
 
 export default function Signin() {
+  const { login, loading, apiBase } = useAuth();
+  const { showToast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  // Handle OAuth callback
+  useEffect(() => {
+    const handleOAuthCallback = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const error = urlParams.get('error');
+      const code = urlParams.get('code');
+      const provider = urlParams.get('provider');
+
+      if (error) {
+        setError(`OAuth error: ${error}`);
+        return;
+      }
+
+      if (code && provider === 'facebook') {
+        try {
+          const response = await fetch(`${apiBase}/auth/facebook/callback?code=${code}`, {
+            method: 'GET',
+            credentials: 'include',
+          });
+          
+          if (!response.ok) {
+            throw new Error('Failed to authenticate with Facebook');
+          }
+
+          const data = await response.json();
+          if (data.access_token) {
+            // Handle successful login
+            router.push('/');
+          }
+        } catch (err) {
+          setError('Failed to authenticate with Facebook. Please try again.');
+          console.error('OAuth error:', err);
+        }
+      }
+    };
+
+    handleOAuthCallback();
+  }, [apiBase, router]);
+
+  const formatApiError = (err: unknown): string => {
+    const fallback = "Failed to sign in";
+    if (typeof err === "string") return err;
+    if (typeof err !== "object" || err === null) return fallback;
+    const getProp = (obj: unknown, key: string): unknown => {
+      if (obj && typeof obj === "object" && key in (obj as Record<string, unknown>)) {
+        return (obj as Record<string, unknown>)[key];
+      }
+      return undefined;
+    };
+    const response = getProp(err, "response");
+    const data = response ? getProp(response, "data") : getProp(err, "data");
+    const payload = data ?? err;
+    const detail =
+      getProp(payload, "detail") ??
+      getProp(payload, "message") ??
+      getProp(payload, "error") ??
+      getProp(payload, "errors");
+    if (!detail) return (getProp(err, "message") as string | undefined) || fallback;
+    if (typeof detail === "string") return detail;
+    if (Array.isArray(detail)) {
+      return (detail as unknown[])
+        .map((d) => (typeof d === "string" ? d : JSON.stringify(d)))
+        .join("; ");
+    }
+    if (typeof detail === "object") {
+      return Object.entries(detail as Record<string, unknown>)
+        .map(([k, v]) => `${k}: ${typeof v === "string" ? v : JSON.stringify(v)}`)
+        .join("; ");
+    }
+    return String(detail);
+  };
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 900));
-      alert("Signed in (demo)");
-    } finally {
-      setLoading(false);
+      const response = await login(email, password);
+      if (response.error) {
+        setError(response.error);
+        showToast(response.error, 'error');
+        return;
+      }
+      // Success: Access the user data from the response
+      if (response.data) {
+        const user = response.data;
+        // Use a small timeout to ensure state updates are processed
+        setTimeout(() => {
+          const redirectPath = user.role === 'admin' ? '/admin' : '/';
+          router.push(redirectPath).catch(err => {
+            console.error('Redirect failed:', err);
+            // Fallback to home if redirect fails
+            window.location.href = '/';
+          });
+        }, 100);
+        showToast('Signed in successfully', 'success');
+      }
+    } catch (err: unknown) {
+      const msg = formatApiError(err);
+      setError(msg);
+      showToast(msg, 'error');
     }
   };
 
@@ -26,7 +124,7 @@ export default function Signin() {
         <title>Sign in • Lootamo</title>
       </Head>
 
-      <div className="min-h-[calc(100vh-9rem)] bg-gradient-to-b from-white to-gray-50 flex items-center justify-center px-4 py-12">
+      <div className="min-h-[100vh] bg-gray-200 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">
           <div className="bg-white/90 backdrop-blur rounded-2xl shadow-xl ring-1 ring-gray-100 overflow-hidden">
             <div className="px-6 pt-6 pb-4 text-center">
@@ -39,11 +137,11 @@ export default function Signin() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Email</label>
                   <input
-                    type="email"
+                    type="text"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
+                    placeholder="you@example.com or yourusername"
                     className="mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm outline-none ring-offset-0 focus:border-gray-300 focus:ring-2 focus:ring-gray-200"
                   />
                 </div>
@@ -62,6 +160,12 @@ export default function Signin() {
                     className="mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm outline-none ring-offset-0 focus:border-gray-300 focus:ring-2 focus:ring-gray-200"
                   />
                 </div>
+
+                {error && (
+                  <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
+                    {error}
+                  </div>
+                )}
 
                 <button
                   type="submit"
@@ -82,12 +186,33 @@ export default function Signin() {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <button className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm hover:bg-gray-50">
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Store the current path to redirect back after login
+                    const redirectPath = window.location.pathname;
+                    localStorage.setItem('login_redirect', redirectPath);
+                    
+                    // Redirect to the backend's Google OAuth endpoint
+                    const redirectUri = `${window.location.origin}/auth/callback`;
+                    const encodedUri = encodeURIComponent(redirectUri);
+                    window.location.href = `${apiBase}/auth/google/login?redirect_uri=${encodedUri}`;
+                  }}
+                  className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm hover:bg-gray-50"
+                  disabled={loading}
+                >
                   <FcGoogle className="text-lg" />
                   Google
                 </button>
-                <button className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm hover:bg-gray-50">
-                  <FaFacebook className="text-lg" color="blue"/>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const redirectUri = encodeURIComponent(`${window.location.origin}/auth/callback?provider=facebook`);
+                    window.location.href = `${apiBase}/auth/facebook/login?redirect_uri=${redirectUri}`;
+                  }}
+                  className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm hover:bg-gray-50"
+                >
+                  <FaFacebook className="text-lg" color="#1877F2"/>
                   Facebook
                 </button>
               </div>

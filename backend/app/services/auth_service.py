@@ -1,33 +1,41 @@
 from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from fastapi import HTTPException, status
 from datetime import datetime, timedelta
 
 from app.models.user import User, UserRole
 from app.schemas.user import UserCreate, UserLogin
-from app.core.security import verify_password, get_password_hash, create_access_token, create_refresh_token, verify_token
+from app.core.security import (
+    verify_password,
+    get_password_hash,
+    create_access_token,
+    create_refresh_token,
+    verify_token,
+)
 from app.core.config import settings
+from datetime import datetime, timezone
 
 
 class AuthService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def create_user(self, user_data: UserCreate, role: UserRole = UserRole.CUSTOMER) -> User:
+    async def create_user(
+        self, user_data: UserCreate, role: UserRole = UserRole.CUSTOMER
+    ) -> User:
         """Create a new user"""
         existing_user = await self.get_user_by_email(user_data.email)
         if existing_user:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User with this email already exists"
+                detail="User with this email already exists",
             )
-        
+
         existing_username = await self.get_user_by_username(user_data.username)
         if existing_username:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Username already taken"
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Username already taken"
             )
 
         hashed_password = get_password_hash(user_data.password)
@@ -40,7 +48,7 @@ class AuthService:
             phone=user_data.phone,
             role=role,
         )
-        
+
         self.db.add(db_user)
         await self.db.commit()
         await self.db.refresh(db_user)
@@ -49,16 +57,20 @@ class AuthService:
     async def get_all_users(self) -> List[User]:
         """Get all users (admin only)"""
         from sqlalchemy import select
+
         result = await self.db.execute(select(User))
         return result.scalars().all()
 
     async def get_user_by_id(self, user_id: int) -> Optional[User]:
         """Get user by ID"""
         from sqlalchemy import select
+
         result = await self.db.execute(select(User).where(User.id == user_id))
         return result.scalar_one_or_none()
 
-    async def update_user_role(self, user_id: int, new_role: UserRole) -> Optional[User]:
+    async def update_user_role(
+        self, user_id: int, new_role: UserRole
+    ) -> Optional[User]:
         """Update user role"""
         user = await self.get_user_by_id(user_id)
         if user:
@@ -77,31 +89,37 @@ class AuthService:
         return False
 
     async def authenticate_user(self, login_data: UserLogin) -> Optional[User]:
-        """Authenticate user with email/username and password"""
-        user = await self.get_user_by_email(login_data.email_or_username)
-        if not user:
-            user = await self.get_user_by_username(login_data.email_or_username)
-        
+        """Authenticate user with EMAIL ONLY and password"""
+        # Enforce email-only login. We do not attempt username lookup here.
+        email_input = (login_data.email_or_username or "").strip().lower()
+
+        user = await self.get_user_by_email(email_input)
         if not user:
             return None
-        
+
         if not verify_password(login_data.password, user.hashed_password):
             return None
-        
+
         if not user.is_active:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User account is deactivated"
+                detail="User account is deactivated",
             )
-        
-        user.last_login = datetime.utcnow()
+
+        user.last_login = datetime.now(timezone.utc)
+
+        self.db.add(user)
         await self.db.commit()
-        
+        await self.db.refresh(user)
+
         return user
 
     async def get_user_by_email(self, email: str) -> Optional[User]:
         """Get user by email"""
-        result = await self.db.execute(select(User).where(User.email == email))
+        # Case-insensitive email lookup to avoid case issues during login
+        result = await self.db.execute(
+            select(User).where(func.lower(User.email) == email.lower())
+        )
         return result.scalar_one_or_none()
 
     async def get_user_by_username(self, username: str) -> Optional[User]:
@@ -123,12 +141,12 @@ class AuthService:
         """Create access and refresh tokens for user"""
         access_token = create_access_token(subject=user.uuid)
         refresh_token = create_refresh_token(subject=user.uuid)
-        
+
         return {
             "access_token": access_token,
             "refresh_token": refresh_token,
             "token_type": "bearer",
-            "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+            "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         }
 
     async def refresh_access_token(self, refresh_token: str) -> dict:
@@ -136,17 +154,16 @@ class AuthService:
         user_uuid = verify_token(refresh_token, token_type="refresh")
         if not user_uuid:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid refresh token"
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
             )
-        
+
         user = await self.get_user_by_uuid(user_uuid)
         if not user or not user.is_active:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User not found or inactive"
+                detail="User not found or inactive",
             )
-        
+
         return self.create_tokens(user)
 
     def create_password_reset_token(self, user_uuid: str) -> str:
@@ -159,7 +176,7 @@ class AuthService:
         user_uuid = verify_token(token, token_type="access")
         if not user_uuid:
             return None
-        
+
         user = await self.get_user_by_uuid(user_uuid)
         return user if user and user.is_active else None
 
@@ -168,7 +185,25 @@ class AuthService:
         user = await self.verify_password_reset_token(token)
         if not user:
             return False
-        
+
         user.hashed_password = get_password_hash(new_password)
         await self.db.commit()
         return True
+
+    async def change_password(
+        self, user: User, current_password: str, new_password: str
+    ) -> None:
+        """Change password for an authenticated user after verifying current password"""
+        # Verify current password
+        if not verify_password(current_password, user.hashed_password):
+            from fastapi import HTTPException
+
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Current password is incorrect",
+            )
+
+        # Update to new password
+        user.hashed_password = get_password_hash(new_password)
+        await self.db.commit()
+        await self.db.refresh(user)

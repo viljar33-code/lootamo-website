@@ -6,7 +6,7 @@ from app.services.auth_service import AuthService
 from app.services.email_service import email_service
 from app.schemas.user import (
     UserCreate, UserResponse, UserLogin, Token, TokenRefresh,
-    PasswordReset, PasswordResetConfirm
+    PasswordReset, PasswordResetConfirm, ChangePassword
 )
 from app.api.dependencies import get_current_active_user
 from app.models.user import User
@@ -46,7 +46,7 @@ async def login(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email/username or password",
+            detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
     
@@ -71,6 +71,31 @@ async def get_current_user_info(
 ):
     """Get current user information"""
     return current_user
+
+
+@router.post("/change-password")
+async def change_password(
+    payload: ChangePassword,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_async_db)
+):
+    """Change password for the authenticated user"""
+    auth_service = AuthService(db)
+
+    # Validate that new password is not same as current
+    if payload.current_password == payload.new_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password must be different from current password"
+        )
+
+    await auth_service.change_password(
+        current_user,
+        payload.current_password,
+        payload.new_password
+    )
+
+    return {"message": "Password changed successfully"}
 
 
 @router.post("/logout")

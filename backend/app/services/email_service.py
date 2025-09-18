@@ -87,7 +87,8 @@ class EmailService:
         try:
             from app.core.config import settings
             template = self.jinja_env.get_template("password_reset.html")
-            reset_url = f"{settings.BACKEND_URL}/api/v1/password-reset/verify?token={reset_token}"
+            # Redirect to frontend reset password page with the token
+            reset_url = f"{settings.FRONTEND_URL}/reset-password?token={reset_token}"
             
             html_content = template.render(
                 username=username,

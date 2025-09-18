@@ -34,6 +34,24 @@ async def update_user_profile(
     return current_user
 
 
+@router.delete("/profile")
+async def delete_own_account(
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_async_db)
+):
+    """Delete the currently authenticated user's account"""
+    try:
+        await db.delete(current_user)
+        await db.commit()
+        return {"message": "Account deleted successfully"}
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete account"
+        ) from e
+
+
 @router.get("/", response_model=List[UserResponse])
 async def list_users(
     skip: int = 0,

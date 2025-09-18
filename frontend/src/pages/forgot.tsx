@@ -1,6 +1,7 @@
 import Head from "next/head";
 import Link from "next/link";
 import { useState } from "react";
+import { getErrorMessage } from '@/utils/error';
 
 export default function Forgot() {
   const [email, setEmail] = useState("");
@@ -9,10 +10,33 @@ export default function Forgot() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email) {
+      alert('Please enter your email address');
+      return;
+    }
+    
     setLoading(true);
     try {
-      await new Promise((r) => setTimeout(r, 900));
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/password-reset`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      
+      if (!response.ok) {
+        throw new Error(data.detail || data.message || 'Failed to send reset email');
+      }
+      
       setSent(true);
+    } catch (error) {
+      console.error('Password reset error:', error);
+      alert(getErrorMessage(error, 'An error occurred. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -24,7 +48,7 @@ export default function Forgot() {
         <title>Forgot password • Lootamo</title>
       </Head>
 
-      <div className="min-h-[calc(100vh-9rem)] bg-gradient-to-b from-white to-gray-50 flex items-center justify-center px-4 py-12">
+      <div className="min-h-[100vh] bg-gray-200 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">
           <div className="bg-white/90 backdrop-blur rounded-2xl shadow-xl ring-1 ring-gray-100 overflow-hidden">
             <div className="px-6 pt-6 pb-4 text-center">

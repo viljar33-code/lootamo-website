@@ -1,10 +1,10 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum as SQLEnum
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum as SQLEnum, ForeignKey
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from enum import Enum
 import uuid
 
-from app.core.database import Base
+from app.db.base import Base
 
 
 class UserRole(str, Enum):
@@ -34,7 +34,7 @@ class User(Base):
     phone = Column(String, nullable=True)
     avatar_url = Column(String, nullable=True)
     
-    social_accounts = relationship("SocialAccount", back_populates="user")
+    social_accounts = relationship("SocialAccount", back_populates="user", lazy="selectin", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<User(id={self.id}, email={self.role})>"

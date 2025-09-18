@@ -3,29 +3,114 @@ import Head from "next/head";
 import { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa6";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/router";
 
 export default function Register() {
-  const [name, setName] = useState("");
+  const { api, apiBase, login } = useAuth();
+  const router = useRouter();
+  const [username, setUsername] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [phone, setPhone] = useState("");
   const [agree, setAgree] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Format backend error payloads (FastAPI typical shapes) to human-readable text
+  const formatApiError = (err: unknown): string => {
+    const fallback = "Something went wrong";
+    if (typeof err === "string") return err;
+    if (typeof err !== "object" || err === null) return fallback;
+
+    // helpers for safe property access without using 'any'
+    const getProp = (obj: unknown, key: string): unknown => {
+      if (obj && typeof obj === "object" && key in (obj as Record<string, unknown>)) {
+        return (obj as Record<string, unknown>)[key];
+      }
+      return undefined;
+    };
+
+    const response = getProp(err, "response");
+    const data = response ? getProp(response, "data") : getProp(err, "data");
+    const payload = data ?? err;
+
+    const detail =
+      getProp(payload, "detail") ??
+      getProp(payload, "message") ??
+      getProp(payload, "error") ??
+      getProp(payload, "errors");
+
+    const fromDetail = (() => {
+      if (!detail) return "";
+      if (typeof detail === "string") return detail;
+
+      if (Array.isArray(detail)) {
+        const msgs = (detail as unknown[])
+          .map((item) => {
+            if (typeof item === "string") return item;
+            if (item && typeof item === "object") {
+              const msg = getProp(item, "msg") ?? getProp(item, "message") ?? getProp(item, "detail") ?? getProp(item, "error");
+              const loc = getProp(item, "loc");
+              const msgText = typeof msg === "string" ? msg : msg != null ? String(msg) : "";
+              if (Array.isArray(loc)) return `${loc.join(".")}: ${msgText}`;
+              return msgText;
+            }
+            return item != null ? String(item) : "";
+          })
+          .filter((s) => Boolean(s)) as string[];
+        return msgs.join("; ");
+      }
+
+      if (detail && typeof detail === "object") {
+        const parts: string[] = [];
+        for (const [k, v] of Object.entries(detail as Record<string, unknown>)) {
+          if (Array.isArray(v)) parts.push(`${k}: ${(v as unknown[]).map((x) => String(x)).join(", ")}`);
+          else if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") parts.push(`${k}: ${String(v)}`);
+          else parts.push(`${k}: ${JSON.stringify(v)}`);
+        }
+        return parts.join("; ");
+      }
+
+      return String(detail);
+    })();
+
+    const message = fromDetail || (typeof payload === "string" ? payload : "") || (getProp(err, "message") as string | undefined) || fallback;
+    return message;
+  };
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     if (password !== confirm) {
-      alert("Passwords do not match");
+      setError("Passwords do not match");
       return;
     }
     if (!agree) {
-      alert("Please agree to the Terms and Privacy Policy");
+      setError("Please agree to the Terms and Privacy Policy");
       return;
     }
     setLoading(true);
     try {
-      await new Promise((r) => setTimeout(r, 900));
-      alert("Account created (demo)");
+      await api.post("/auth/register", {
+        email,
+        username,
+        first_name: firstName,
+        last_name: lastName,
+        phone,
+        password,
+        confirm_password: confirm,
+      });
+      // Auto-login after registration
+      await login(email, password);
+      // Redirect to home after successful registration and login
+      router.push("/");
+    } catch (err: unknown) {
+      const message = formatApiError(err) || "Failed to create account";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -37,7 +122,7 @@ export default function Register() {
         <title>Create account • Lootamo</title>
       </Head>
 
-      <div className="min-h-[calc(100vh-9rem)] bg-gradient-to-b from-white to-gray-50 flex items-center justify-center px-4 py-12">
+      <div className="min-h-[100vh] bg-gray-200 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">
           <div className="bg-white/90 backdrop-blur rounded-2xl shadow-xl ring-1 ring-gray-100 overflow-hidden">
             <div className="px-6 pt-6 pb-4 text-center">
@@ -48,15 +133,40 @@ export default function Register() {
             <div className="px-6 pb-2">
               <form onSubmit={onSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Full name</label>
+                  <label className="block text-sm font-medium text-gray-700">Username</label>
                   <input
                     type="text"
                     required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Jane Doe"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="jane_doe"
                     className="mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-gray-300 focus:ring-2 focus:ring-gray-200"
                   />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">First name</label>
+                    <input
+                      type="text"
+                      required
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="Jane"
+                      className="mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-gray-300 focus:ring-2 focus:ring-gray-200"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Last name</label>
+                    <input
+                      type="text"
+                      required
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder="Doe"
+                      className="mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-gray-300 focus:ring-2 focus:ring-gray-200"
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -67,6 +177,18 @@ export default function Register() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
+                    className="mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-gray-300 focus:ring-2 focus:ring-gray-200"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Phone</label>
+                  <input
+                    type="tel"
+                    required
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+1 555 123 4567"
                     className="mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-gray-300 focus:ring-2 focus:ring-gray-200"
                   />
                 </div>
@@ -108,6 +230,12 @@ export default function Register() {
                   <a href="#" className="underline"> Privacy Policy</a>
                 </label>
 
+                {error && (
+                  <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
+                    {error}
+                  </div>
+                )}
+
                 <button
                   type="submit"
                   disabled={loading}
@@ -127,12 +255,24 @@ export default function Register() {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <button className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm hover:bg-gray-50">
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.href = `${apiBase}/auth/google/login`;
+                  }}
+                  className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm hover:bg-gray-50"
+                >
                   <FcGoogle className="text-lg" />
                   Google
                 </button>
-                <button className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm hover:bg-gray-50">
-                  <FaFacebook className="text-lg" color="blue"/>
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.href = `${apiBase}/auth/facebook/login`;
+                  }}
+                  className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm hover:bg-gray-50"
+                >
+                  <FaFacebook className="text-lg" color="#1877F2" />
                   Facebook
                 </button>
               </div>

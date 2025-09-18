@@ -117,3 +117,19 @@ class PasswordResetConfirm(BaseModel):
         if 'new_password' in values and v != values['new_password']:
             raise ValueError('Passwords do not match')
         return v
+
+
+class ChangePassword(BaseModel):
+    current_password: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=8, max_length=100)
+    confirm_password: str = Field(..., min_length=8, max_length=100)
+
+    @validator('new_password')
+    def validate_new_password_strength(cls, v):
+        return validate_password(v)
+
+    @validator('confirm_password')
+    def confirm_matches(cls, v, values, **kwargs):
+        if 'new_password' in values and v != values['new_password']:
+            raise ValueError('Passwords do not match')
+        return v

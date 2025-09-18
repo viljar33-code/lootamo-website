@@ -3,7 +3,7 @@ from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from enum import Enum
 
-from app.core.database import Base
+from app.db.base import Base
 
 
 class SocialProvider(str, Enum):
@@ -28,7 +28,7 @@ class SocialAccount(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
-    user = relationship("User", back_populates="social_accounts")
+    user = relationship("User", back_populates="social_accounts", lazy="selectin", foreign_keys=[user_id])
     
     def __repr__(self):
         return f"<SocialAccount(user_id={self.user_id}, provider={self.provider})>"

@@ -1,12 +1,23 @@
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
 from app.core.config import settings
+from app.db.base import Base  # Import Base from our new location
 
-# Convert PostgreSQL URL for async usage
-ASYNC_DATABASE_URL = settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
+# Base DB URL from settings
+DB_URL = settings.DATABASE_URL.strip()
+
+# Normalize URL to use psycopg (v3) driver for both sync and async
+# Supported forms after normalization:
+#  - postgresql+psycopg://...
+#  - postgresql://...  -> converted to postgresql+psycopg://...
+if "+psycopg" in DB_URL:
+    SYNC_DATABASE_URL = DB_URL
+    ASYNC_DATABASE_URL = DB_URL
+else:
+    SYNC_DATABASE_URL = DB_URL.replace("postgresql://", "postgresql+psycopg://")
+    ASYNC_DATABASE_URL = SYNC_DATABASE_URL
 
 # Async engine
 async_engine = create_async_engine(
@@ -23,9 +34,9 @@ AsyncSessionLocal = async_sessionmaker(
     expire_on_commit=False
 )
 
-# Sync engine for migrations
+# Sync engine for migrations and blocking tasks
 sync_engine = create_engine(
-    settings.DATABASE_URL,
+    SYNC_DATABASE_URL,
     echo=settings.DEBUG,
     pool_pre_ping=True,
     pool_recycle=300,
@@ -33,8 +44,7 @@ sync_engine = create_engine(
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sync_engine)
 
-Base = declarative_base()
-
+# Base is now imported from app.db.base
 
 # Dependency to get async database session
 async def get_async_db():

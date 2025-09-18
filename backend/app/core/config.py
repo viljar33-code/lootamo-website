@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
 from typing import List
 import os
@@ -44,6 +44,9 @@ class Settings(BaseSettings):
     FACEBOOK_CLIENT_SECRET: str = Field(default="", env="FACEBOOK_CLIENT_SECRET")
     FACEBOOK_REDIRECT_URI: str = Field(default="http://localhost:8000/api/v1/auth/facebook/callback", env="FACEBOOK_REDIRECT_URI")
     
+    # Frontend URL
+    FRONTEND_URL: str = Field(default="http://localhost:3000", env="FRONTEND_URL")
+    
     # SMTP Configuration
     SMTP_HOST: str = Field(default="smtp.gmail.com", env="SMTP_HOST")
     SMTP_PORT: int = Field(default=587, env="SMTP_PORT")
@@ -55,10 +58,13 @@ class Settings(BaseSettings):
     
     # Application URLs
     BACKEND_URL: str = Field(default="http://localhost:8000", env="BACKEND_URL")
-    
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra="ignore",
+    )
 
 
 settings = Settings()
