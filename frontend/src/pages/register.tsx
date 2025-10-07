@@ -20,13 +20,11 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Format backend error payloads (FastAPI typical shapes) to human-readable text
   const formatApiError = (err: unknown): string => {
     const fallback = "Something went wrong";
     if (typeof err === "string") return err;
     if (typeof err !== "object" || err === null) return fallback;
 
-    // helpers for safe property access without using 'any'
     const getProp = (obj: unknown, key: string): unknown => {
       if (obj && typeof obj === "object" && key in (obj as Record<string, unknown>)) {
         return (obj as Record<string, unknown>)[key];
@@ -104,9 +102,7 @@ export default function Register() {
         password,
         confirm_password: confirm,
       });
-      // Auto-login after registration
       await login(email, password);
-      // Redirect to home after successful registration and login
       router.push("/");
     } catch (err: unknown) {
       const message = formatApiError(err) || "Failed to create account";
@@ -279,7 +275,7 @@ export default function Register() {
 
               <p className="mt-6 text-center text-sm text-gray-600">
                 Already have an account? {" "}
-                <Link href="/signin" className="font-semibold text-gray-900 hover:underline">Sign in</Link>
+                <Link href="/signin" className="font-semibold text-gray-900 hover:underline">Log in</Link>
               </p>
 
               <p className="mt-2 text-center text-[11px] text-gray-400">

@@ -67,8 +67,8 @@ class UserResponse(BaseModel):
     uuid: str
     email: str
     username: str
-    first_name: str
-    last_name: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     role: UserRole
     is_active: bool
     is_verified: bool

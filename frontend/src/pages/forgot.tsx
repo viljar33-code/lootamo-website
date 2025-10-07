@@ -2,6 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useState } from "react";
 import { getErrorMessage } from '@/utils/error';
+import toast from "react-hot-toast";
 
 export default function Forgot() {
   const [email, setEmail] = useState("");
@@ -11,7 +12,7 @@ export default function Forgot() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      alert('Please enter your email address');
+      toast.error('Please enter your email address');
       return;
     }
     
@@ -36,7 +37,7 @@ export default function Forgot() {
       setSent(true);
     } catch (error) {
       console.error('Password reset error:', error);
-      alert(getErrorMessage(error, 'An error occurred. Please try again.'));
+      toast.error(getErrorMessage(error, 'An error occurred. Please try again.'));
     } finally {
       setLoading(false);
     }

@@ -16,7 +16,6 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Redirect if already logged in as admin
   useEffect(() => {
     if (!authLoading && user?.role === 'admin') {
       router.push('/admin/dashboard');
@@ -48,10 +47,8 @@ export default function AdminLogin() {
       const user = response.data;
       
       if (user?.role === 'admin') {
-        // The useEffect will handle the redirection when the user state updates
         return;
       } else {
-        // If login was successful but user is not an admin, log them out
         if (user) {
           await logout();
         }
@@ -92,7 +89,7 @@ export default function AdminLogin() {
               </Link>
               <h1 className="mt-4 text-3xl font-extrabold text-white">Admin Dashboard</h1>
               <p className="mt-2 text-sm text-gray-300">
-                Sign in to manage games, software, products, and orders.
+              Log in to manage games, software, products, and orders.
               </p>
             </div>
 
@@ -134,7 +131,7 @@ export default function AdminLogin() {
                   loading ? "bg-blue-500" : "bg-blue-600 hover:bg-blue-700"
                 }`}
               >
-                {loading ? "Signing in…" : "Sign in"}
+                {loading ? "Logging in…" : "Log in"}
               </button>
 
               <div className="text-xs text-gray-400 text-center">

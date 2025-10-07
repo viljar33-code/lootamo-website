@@ -58,6 +58,8 @@ class FacebookOAuthService:
         self, facebook_user_data: Dict[str, Any], access_token: str
     ) -> User:
         """Authenticate existing user or create new user from Facebook data with enhanced account linking"""
+        from datetime import datetime, timezone
+        
         facebook_id = facebook_user_data.get("id")
         email = facebook_user_data.get("email")
         name = facebook_user_data.get("name", "")
@@ -80,7 +82,6 @@ class FacebookOAuthService:
             f"Processing Facebook authentication for ID: {facebook_id}, email: {email}"
         )
 
-        # Prepare provider data for account linking service
         provider_data = {
             "email": email,
             "name": name,
@@ -89,9 +90,7 @@ class FacebookOAuthService:
             "avatar_url": picture_url,
         }
 
-        # Only attempt account linking if we have a valid email (not placeholder)
         if email and not email.endswith("@example.com"):
-            # Try to link to existing account
             user, is_new_link = (
                 await self.account_linking_service.link_social_account_to_existing_user(
                     email=email,
@@ -103,6 +102,11 @@ class FacebookOAuthService:
             )
 
             if user:
+                user.last_login = datetime.now(timezone.utc)
+                self.db.add(user)
+                await self.db.commit()
+                await self.db.refresh(user)
+                
                 if is_new_link:
                     print(
                         f"Successfully linked Facebook account to existing user: {email}"
@@ -111,7 +115,6 @@ class FacebookOAuthService:
                     print(f"Updated existing Facebook social account for user: {email}")
                 return user
 
-        # No existing user found or no valid email, create new user
         print(f"Creating new user from Facebook data: {facebook_id}")
         new_user = await self.create_user_from_facebook(
             facebook_id=facebook_id,
@@ -135,14 +138,12 @@ class FacebookOAuthService:
         picture_url: Optional[str],
         access_token: str,
     ) -> User:
-        # 🟢 Check if a user already exists with same email
         user_email = email if email else f"facebook_{facebook_id}@example.com"
         result = await self.db.execute(select(User).where(User.email == user_email))
         existing_user = result.scalar_one_or_none()
 
         if existing_user:
             print(f"User already exists with email {user_email}, reusing account.")
-            # Optionally: update avatar or link Facebook social account again
             await self.create_social_account(
                 user=existing_user,
                 provider_id=facebook_id,
@@ -153,7 +154,6 @@ class FacebookOAuthService:
             )
             return existing_user
 
-        # 🟢 If no user exists, create a new one
         if not first_name and not last_name and name:
             name_parts = name.split(" ", 1)
             first_name = name_parts[0] if len(name_parts) > 0 else ""
@@ -168,6 +168,8 @@ class FacebookOAuthService:
 
         oauth_password = secrets.token_urlsafe(32)
 
+        from datetime import datetime, timezone
+        
         db_user = User(
             email=user_email,
             username=username,
@@ -178,6 +180,7 @@ class FacebookOAuthService:
             is_active=True,
             is_verified=True,
             avatar_url=picture_url,
+            last_login=datetime.now(timezone.utc)  # Set last_login for new OAuth users
         )
 
         self.db.add(db_user)

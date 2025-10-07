@@ -286,7 +286,7 @@ export default function PurchasePage() {
 
             {Boolean(product.images?.length) && (
               <div className="flex gap-2 mt-3 overflow-x-auto scrollbar-hide p-2">
-                {product.images.map((src: string, idx: number) => (
+                {product.images.filter((src: any): src is string => typeof src === 'string' && src.trim() !== '').map((src: string, idx: number) => (
                   <div
                     key={idx}
                     className={`relative w-28 h-20 rounded overflow-hidden flex-shrink-0 cursor-pointer border-2 transition-all duration-300 ${

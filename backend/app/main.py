@@ -10,13 +10,19 @@ from app.core.database import create_tables
 from app.core.redis import get_redis_client, close_redis_client
 from app.api.v1.api import api_router
 from app.middleware.rate_limit import RateLimitMiddleware
+from app.services.scheduler_service import scheduler_service
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await create_tables()
     redis_client = await get_redis_client()
+    
+    await scheduler_service.start()
+    
     yield
+    
+    await scheduler_service.shutdown()
     await close_redis_client()
 
 

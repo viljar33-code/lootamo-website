@@ -20,6 +20,7 @@ async def register(
     db: AsyncSession = Depends(get_async_db)
 ):
     """Register a new customer account (public registration)"""
+    
     from app.models.user import UserRole
     
     auth_service = AuthService(db)

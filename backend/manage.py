@@ -18,7 +18,6 @@ import sys
 import argparse
 from pathlib import Path
 
-# Add the current directory to Python path
 sys.path.insert(0, str(Path(__file__).parent))
 
 def create_superuser():
@@ -29,10 +28,10 @@ def create_superuser():
 def run_server():
     """Run development server"""
     import uvicorn
-    print("🚀 Starting Lootamo Development Server...")
-    print("📍 Server URL: http://localhost:8000")
-    print("📖 API Docs: http://localhost:8000/docs")
-    print("\n⏹️  Press CTRL+C to stop the server")
+    print(" Starting Lootamo Development Server...")
+    print(" Server URL: http://localhost:8000")
+    print(" API Docs: http://localhost:8000/docs")
+    print("\n  Press CTRL+C to stop the server")
     
     uvicorn.run(
         "app.main:app",
@@ -59,26 +58,26 @@ def migrate():
         )
         
         if result.returncode == 0:
-            print("✅ Migrations completed successfully")
+            print("Migrations completed successfully")
             print(result.stdout)
         else:
-            print("❌ Migration failed")
+            print(" Migration failed")
             print(result.stderr)
             sys.exit(1)
             
     except FileNotFoundError:
-        print("❌ Alembic not found. Install with: pip install alembic")
+        print("Alembic not found. Install with: pip install alembic")
         sys.exit(1)
 
 def seed_database():
     """Seed database with sample data"""
-    print("🌱 Seeding database with sample data...")
-    print("💡 This feature will be implemented in future versions")
+    print("Seeding database with sample data...")
+    print("This feature will be implemented in future versions")
 
 def show_help():
     """Show available commands"""
     print("""
-🛠️  Lootamo E-commerce Management CLI
+Lootamo E-commerce Management CLI
 
 Available commands:
   createsuperuser    Create a superuser account
@@ -118,12 +117,12 @@ def main():
         try:
             commands[command]()
         except KeyboardInterrupt:
-            print("\n\n🛑 Operation cancelled by user")
+            print("\n\n Operation cancelled by user")
         except Exception as e:
-            print(f"\n💥 Error: {e}")
+            print(f"\nError: {e}")
             sys.exit(1)
     else:
-        print(f"❌ Unknown command: {command}")
+        print(f"Unknown command: {command}")
         show_help()
         sys.exit(1)
 

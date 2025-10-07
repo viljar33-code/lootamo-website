@@ -1,13 +1,19 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { FiGrid, FiUploadCloud, FiPackage, FiActivity, FiUser, FiLogOut } from "react-icons/fi";
+import { FiGrid, FiUploadCloud, FiActivity, FiUser, FiLogOut, FiCreditCard, FiUsers, FiShoppingCart, FiHeart, FiPackage,   FiSettings, FiBarChart2 } from "react-icons/fi";
 import { useAuth } from '@/contexts/AuthContext';
 
 const nav = [
   { href: "/admin/dashboard", label: "Dashboard", icon: <FiGrid /> },
-  { href: "/admin/import", label: "Catalog Import", icon: <FiUploadCloud /> },
-  { href: "/admin/orders", label: "Orders & Licenses", icon: <FiPackage /> },
-  { href: "/admin/logs", label: "Logs & Monitoring", icon: <FiActivity /> },
+  { href: "/admin/orders", label: "Order Management", icon: <FiShoppingCart /> },
+  { href: "/admin/payments", label: "Payment Processing", icon: <FiCreditCard /> },
+  { href: "/admin/users", label: "User Management", icon: <FiUsers /> },
+  { href: "/admin/products", label: "Product Catalog", icon: <FiPackage /> },
+  { href: "/admin/analytics", label: "Analytics & Reports", icon: <FiBarChart2 /> },
+  { href: "/admin/wishlist", label: "Wishlist Analytics", icon: <FiHeart /> },
+  // { href: "/admin/import", label: "G2A Integration", icon: <FiUploadCloud /> },
+  { href: "/admin/scheduler", label: "Sync Scheduler", icon: <FiSettings /> },
+  { href: "/admin/logs", label: "System Monitoring", icon: <FiActivity /> },
   { href: "/admin/profile", label: "My Profile", icon: <FiUser /> },
 ];
 
@@ -34,7 +40,7 @@ export default function AdminSidebar({ isOpen = false, onClose }: { isOpen?: boo
 
       {/* Mobile drawer */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 text-slate-100 transform transition-transform duration-300 md:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-slate-800 text-slate-100 transform transition-transform duration-300 md:hidden ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         role="dialog"
@@ -95,7 +101,7 @@ export default function AdminSidebar({ isOpen = false, onClose }: { isOpen?: boo
       </div>
 
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex md:flex-col w-[300px] bg-slate-900 text-slate-100 min-h-screen">
+      <aside className="hidden md:flex md:flex-col w-[300px] bg-slate-800 text-slate-100 min-h-screen">
         <div className="h-16 flex items-center px-4 border-b border-slate-800">
           <span className="text-lg font-semibold text-nowrap">Lootamo Admin</span>
         </div>
@@ -138,7 +144,7 @@ export default function AdminSidebar({ isOpen = false, onClose }: { isOpen?: boo
           </div>
         </nav>
 
-        <div className="p-3 text-xs text-slate-400">
+        <div className="p-3 text-xs text-slate-400 flex-shrink-0">
           <div className="text-center">{new Date().getFullYear()} Lootamo</div>
           <div className="text-center text-slate-500 mt-1">v1.0.0</div>
         </div>

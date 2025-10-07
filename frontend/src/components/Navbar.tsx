@@ -2,10 +2,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { IoHeart, IoCart, IoMenu, IoClose } from "react-icons/io5";
+import { useWishlist } from "@/contexts/WishlistContext";
+import { useCart } from "@/contexts/CartContext";
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { summary } = useWishlist();
+  const { getCartCount } = useCart();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -24,6 +28,7 @@ export default function Navbar() {
             </Link>
 
             <nav className="hidden lg:flex items-center gap-1">
+              <Link href="/products" className="px-3 py-2 rounded-md text-sm hover:bg-gray-100">All Products</Link>
               <Link href="/deals" className="px-3 py-2 rounded-md text-sm hover:bg-gray-100">Deals</Link>
               <Link href="/categories" className="px-3 py-2 rounded-md text-sm hover:bg-gray-100">Categories</Link>
               <Link href="/giftcards" className="px-3 py-2 rounded-md text-sm hover:bg-gray-100">Gift Cards</Link>
@@ -42,15 +47,24 @@ export default function Navbar() {
             </form>
           </div>
 
-          <div className="flex items-center gap-4">
-            <Link href="/wishlist" className="hidden sm:inline-flex items-center gap-2">
+          <div className="flex items-center gap-6">
+            <Link href="/wishlist" className="hidden sm:inline-flex items-center gap-1 relative">
               <IoHeart className="w-5 h-5" />
               <span className="text-sm hidden md:inline">Wishlist</span>
+              {summary && summary.total_items > 0 && (
+                <span className="absolute -top-1.5 -right-3.5 text-xs bg-red-500 text-white rounded-full px-1 min-w-[16px] h-4 flex items-center justify-center">
+                  {summary.total_items > 99 ? '99+' : summary.total_items}
+                </span>
+              )}
             </Link>
 
             <Link href="/cart" className="relative">
               <IoCart className="w-6 h-6" />
-              <span className="absolute -top-1 -right-2 text-xs bg-red-500 text-white rounded-full px-1">2</span>
+              {getCartCount() > 0 && (
+                <span className="absolute -top-1 -right-2 text-xs bg-red-500 text-white rounded-full px-1 min-w-[16px] h-4 flex items-center justify-center">
+                  {getCartCount() > 99 ? '99+' : getCartCount()}
+                </span>
+              )}
             </Link>
 
             <button className="lg:hidden p-2" aria-label="Open menu" onClick={() => setMobileOpen(true)}>
@@ -74,6 +88,7 @@ export default function Navbar() {
             </div>
 
             <nav className="mt-4 flex flex-col gap-3">
+              <Link href="/products" className="block px-3 py-2 rounded-md">All Products</Link>
               <Link href="/deals" className="block px-3 py-2 rounded-md">Deals</Link>
               <Link href="/categories" className="block px-3 py-2 rounded-md">Categories</Link>
               <Link href="/giftcards" className="block px-3 py-2 rounded-md">Gift Cards</Link>

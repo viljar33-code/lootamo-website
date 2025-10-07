@@ -12,7 +12,11 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from app.core.config import settings
 from app.core.database import Base
-from app.models.user import User  # Import all models
+# Import models in dependency order to avoid circular imports
+from app.models.product import Product, Category, Restriction, Requirement, Image, Video, ProductSyncLog  # Import product models first
+from app.models.wishlist import Wishlist  # Import wishlist model
+from app.models.cart import Cart  # Import cart model
+from app.models.user import User  # Import user model last since it references other models
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -34,8 +38,17 @@ target_metadata = Base.metadata
 
 
 def get_url():
-    # Use sync driver for migrations
-    return settings.DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://")
+    # Use sync psycopg driver for migrations
+    url = settings.DATABASE_URL
+    # Handle both asyncpg and psycopg drivers
+    if "postgresql+asyncpg://" in url:
+        return url.replace("postgresql+asyncpg://", "postgresql+psycopg://")
+    elif "postgresql+psycopg://" in url:
+        return url
+    elif url.startswith("postgresql://"):
+        return url.replace("postgresql://", "postgresql+psycopg://")
+    else:
+        return url
 
 
 def run_migrations_offline() -> None:

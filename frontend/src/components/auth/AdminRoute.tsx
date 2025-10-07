@@ -9,7 +9,6 @@ export default function AdminRoute({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     if (!loading && (!user || user.role !== 'admin')) {
-      // Redirect to login if not authenticated or not an admin
       router.push('/admin/login');
     }
   }, [user, loading, router]);

@@ -46,7 +46,6 @@ export default function AdminImport() {
     URL.revokeObjectURL(url);
   };
 
-  // Shared product data (single source of truth)
   const products = [
     {
       sku: "SAF-CL-GUIDC-STD-6881",

@@ -1,15 +1,19 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { IoGameController, IoPersonOutline, IoChevronDown, IoLogOutOutline } from "react-icons/io5";
+import { IoGameController, IoPersonOutline, IoChevronDown, IoLogOutOutline, IoCardOutline,IoHeart, IoCart } from "react-icons/io5";
 import { MdAttachMoney, MdLanguage } from "react-icons/md";
 import { useAuth } from "@/contexts/AuthContext";
+import { useWishlist } from "@/contexts/WishlistContext";
+import { useCart } from "@/contexts/CartContext";
 
 export default function Topbar() {
   const { user, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const { summary } = useWishlist();
+  const { getCartCount } = useCart();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -94,6 +98,14 @@ export default function Topbar() {
                     <IoPersonOutline className="mr-3 text-gray-500" />
                     Profile
                   </Link>
+                  <Link
+                    href="/profile/orders"
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => setIsDropdownOpen(false)}
+                  >
+                    <IoCardOutline className="mr-3 text-gray-500" />
+                    My Orders
+                  </Link>
                   {/* <Link
                     href="/settings"
                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -107,7 +119,7 @@ export default function Topbar() {
                     className="w-full text-left flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                   >
                     <IoLogOutOutline className="mr-3" />
-                    Sign out
+                    Logout
                   </button>
                 </div>
               )}
@@ -115,9 +127,32 @@ export default function Topbar() {
           ) : (
             <Link href="/signin" className="hover:underline flex items-center gap-1">
               <IoPersonOutline className="text-sm" />
-              Sign in
+              Log in
             </Link>
           )}
+
+          <div className="flex items-center gap-6">
+            <Link href="/wishlist" className="hidden sm:inline-flex items-center gap-1 relative">
+              <IoHeart className="w-5 h-5" />
+              <span className="text-sm hidden md:inline">Wishlist</span>
+              {summary && summary.total_items > 0 && (
+                <span className="absolute -top-1.5 -right-3.5 text-xs bg-red-500 text-white rounded-full px-1 min-w-[16px] h-4 flex items-center justify-center">
+                  {summary.total_items > 99 ? '99+' : summary.total_items}
+                </span>
+              )}
+            </Link>
+
+            <Link href="/cart" className="relative">
+              <IoCart className="w-6 h-6" />
+              {getCartCount() > 0 && (
+                <span className="absolute -top-1 -right-2 text-xs bg-red-500 text-white rounded-full px-1 min-w-[16px] h-4 flex items-center justify-center">
+                  {getCartCount() > 99 ? '99+' : getCartCount()}
+                </span>
+              )}
+            </Link>
+
+          </div>
+
         </div>
       </div>
     </div>

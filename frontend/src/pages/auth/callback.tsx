@@ -17,10 +17,9 @@ const OAuthCallback = () => {
         refresh_token, 
         user_id, 
         error: authError,
-        // Handle OAuth flows
         code,
         state,
-        provider = 'google' // Default to google for backward compatibility
+        provider = 'google'
       } = router.query;
 
       if (authError) {
@@ -29,7 +28,6 @@ const OAuthCallback = () => {
 
       if (access_token && refresh_token) {
         try {
-          // Store tokens first
           const tokenExpiry = Date.now() + (23 * 60 * 60 * 1000);
           localStorage.setItem('access_token', access_token as string);
           localStorage.setItem('refresh_token', refresh_token as string);
@@ -38,7 +36,6 @@ const OAuthCallback = () => {
           if (user_id) {
             localStorage.setItem('user_id', user_id as string);
             
-            // Try to fetch user data using the user_id
             try {
               const userResponse = await axios.get(
                 `${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}`,
@@ -56,7 +53,6 @@ const OAuthCallback = () => {
               }
             } catch {
               console.warn('Could not fetch user details, using minimal user info');
-              // Create a minimal user object if we can't fetch full details
               const minimalUser = {
                 id: user_id,
                 email: '',
@@ -66,14 +62,12 @@ const OAuthCallback = () => {
             }
           }
 
-          // Update auth context
           await loginWithOAuth(
             access_token as string,
             refresh_token as string,
             user_id as string || ''
           );
           
-          // Redirect after successful login
           const redirectPath = localStorage.getItem('redirect_after_login') || '/';
           localStorage.removeItem('redirect_after_login');
           window.location.href = redirectPath;
@@ -115,7 +109,6 @@ const OAuthCallback = () => {
         throw new Error('Missing authentication tokens or code');
       }
 
-      // Handle redirect after successful authentication
       const redirectPath = localStorage.getItem('redirect_after_login') || '/';
       localStorage.removeItem('redirect_after_login');
       router.push(redirectPath);

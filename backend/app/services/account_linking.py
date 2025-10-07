@@ -42,7 +42,6 @@ class AccountLinkingService:
         """
         logger.info(f"Attempting to link {provider.value} account for email: {email}")
         
-        # First, check if this social account already exists
         existing_social_account = await self.get_social_account_by_provider_id(provider_id, provider)
         
         if existing_social_account:
@@ -59,14 +58,12 @@ class AccountLinkingService:
             user = await self.auth_service.get_user_by_id(existing_social_account.user_id)
             return user, False
         
-        # Check if user exists with this email
         existing_user = await self.auth_service.get_user_by_email(email)
         
         if not existing_user:
             logger.info(f"No existing user found for email: {email}")
             return None, False
         
-        # Check if user already has this social provider linked
         existing_provider_link = await self.get_social_account_by_user_and_provider(
             existing_user.id, provider
         )
@@ -78,7 +75,6 @@ class AccountLinkingService:
                 detail=f"This user already has a {provider.value} account linked"
             )
         
-        # Create new social account link
         logger.info(f"Linking {provider.value} account to existing user_id: {existing_user.id}")
         social_account = await self.create_social_account_link(
             user=existing_user,
@@ -88,7 +84,6 @@ class AccountLinkingService:
             access_token=access_token
         )
         
-        # Update user profile with social data if missing
         await self.update_user_profile_from_social_data(existing_user, provider_data)
         
         logger.info(f"Successfully linked {provider.value} account to user {existing_user.email}")
@@ -127,13 +122,11 @@ class AccountLinkingService:
         """Update user profile with data from social provider if fields are missing"""
         updated = False
         
-        # Update avatar if user doesn't have one
         if not user.avatar_url and provider_data.get('avatar_url'):
             user.avatar_url = provider_data['avatar_url']
             updated = True
             logger.info(f"Updated avatar for user {user.id}")
         
-        # Update first/last name if missing
         if not user.first_name and provider_data.get('first_name'):
             user.first_name = provider_data['first_name']
             updated = True
@@ -207,15 +200,12 @@ class AccountLinkingService:
         Check if a social account can be safely unlinked.
         User must have either a password or at least one other social account.
         """
-        # If user has a password, they can unlink any social account
         if user.hashed_password:
             return True
         
-        # Count other social accounts
         social_accounts = await self.get_user_social_accounts(user.id)
         other_accounts = [acc for acc in social_accounts if acc.provider != provider]
         
-        # Must have at least one other way to authenticate
         return len(other_accounts) > 0
 
     async def get_account_linking_info(self, user: User) -> Dict[str, Any]:

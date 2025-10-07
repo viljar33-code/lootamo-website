@@ -7,19 +7,18 @@ import Hero from "@/components/Hero";
 import Footer from "@/components/Footer";
 import HeroCard from "@/components/HeroCard";
 import ChoosePlatform from "@/components/ChoosePlatform";
+import ProductList from "@/components/ProductList";
 
 export default function Home() {
   const router = useRouter();
   const { user, loading } = useAuth();
 
   useEffect(() => {
-    // If user is admin, redirect to admin dashboard
     if (!loading && user?.role === 'admin') {
       router.push('/admin/dashboard');
     }
   }, [user, loading, router]);
 
-  // Show loading state while checking auth
   if (loading || (user?.role === 'admin' && !router.pathname.startsWith('/admin'))) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -35,6 +34,18 @@ export default function Home() {
       <Hero />
       <HeroCard/>
       <ChoosePlatform/>
+      
+      {/* Featured Products Section */}
+      <section className="py-12 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <ProductList 
+            title="Featured Games" 
+            params={{ limit: 20 }}
+            className="mb-8"
+          />
+        </div>
+      </section>
+      
       <Footer />
     </>
   );

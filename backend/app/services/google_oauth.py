@@ -53,6 +53,8 @@ class GoogleOAuthService:
     
     async def authenticate_or_create_user(self, google_user_data: Dict[str, Any], access_token: str) -> User:
         """Authenticate existing user or create new user from Google data with enhanced account linking"""
+        from datetime import datetime, timezone
+        
         google_id = google_user_data.get("id")
         email = google_user_data.get("email")
         name = google_user_data.get("name", "")
@@ -66,7 +68,6 @@ class GoogleOAuthService:
         
         print(f"Processing Google authentication for email: {email}")
         
-        # Prepare provider data for account linking service
         provider_data = {
             'email': email,
             'name': name,
@@ -75,7 +76,6 @@ class GoogleOAuthService:
             'avatar_url': picture
         }
         
-        # Try to link to existing account
         user, is_new_link = await self.account_linking_service.link_social_account_to_existing_user(
             email=email,
             provider=SocialProvider.GOOGLE,
@@ -85,13 +85,17 @@ class GoogleOAuthService:
         )
         
         if user:
+            user.last_login = datetime.now(timezone.utc)
+            self.db.add(user)
+            await self.db.commit()
+            await self.db.refresh(user)
+            
             if is_new_link:
                 print(f"Successfully linked Google account to existing user: {email}")
             else:
                 print(f"Updated existing Google social account for user: {email}")
             return user
         
-        # No existing user found, create new user
         print(f"Creating new user from Google data: {email}")
         new_user = await self.create_user_from_google(
             google_id=google_id,
@@ -112,6 +116,8 @@ class GoogleOAuthService:
         access_token: str
     ) -> User:
         """Create new user from Google OAuth data"""
+        from datetime import datetime, timezone
+        
         name_parts = name.split(" ", 1) if name else ["", ""]
         first_name = name_parts[0] if len(name_parts) > 0 else ""
         last_name = name_parts[1] if len(name_parts) > 1 else ""
@@ -136,7 +142,8 @@ class GoogleOAuthService:
             role=UserRole.CUSTOMER,
             is_active=True,
             is_verified=True,  
-            avatar_url=picture
+            avatar_url=picture,
+            last_login=datetime.now(timezone.utc)  # Set last_login for new OAuth users
         )
         
         self.db.add(db_user)

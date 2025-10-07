@@ -15,7 +15,6 @@ export default function Signin() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // Handle OAuth callback
   useEffect(() => {
     const handleOAuthCallback = async () => {
       const urlParams = new URLSearchParams(window.location.search);
@@ -41,7 +40,6 @@ export default function Signin() {
 
           const data = await response.json();
           if (data.access_token) {
-            // Handle successful login
             router.push('/');
           }
         } catch (err) {
@@ -97,15 +95,12 @@ export default function Signin() {
         showToast(response.error, 'error');
         return;
       }
-      // Success: Access the user data from the response
       if (response.data) {
         const user = response.data;
-        // Use a small timeout to ensure state updates are processed
         setTimeout(() => {
           const redirectPath = user.role === 'admin' ? '/admin' : '/';
           router.push(redirectPath).catch(err => {
             console.error('Redirect failed:', err);
-            // Fallback to home if redirect fails
             window.location.href = '/';
           });
         }, 100);
@@ -121,7 +116,7 @@ export default function Signin() {
   return (
     <>
       <Head>
-        <title>Sign in • Lootamo</title>
+        <title>Log in • Lootamo</title>
       </Head>
 
       <div className="min-h-[100vh] bg-gray-200 flex items-center justify-center px-4 py-12">
@@ -129,7 +124,7 @@ export default function Signin() {
           <div className="bg-white/90 backdrop-blur rounded-2xl shadow-xl ring-1 ring-gray-100 overflow-hidden">
             <div className="px-6 pt-6 pb-4 text-center">
               <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Welcome back</h1>
-              <p className="mt-1 text-sm text-gray-500">Sign in to continue</p>
+              <p className="mt-1 text-sm text-gray-500">Log in to continue</p>
             </div>
 
             <div className="px-6 pb-2">
@@ -172,7 +167,7 @@ export default function Signin() {
                   disabled={loading}
                   className="w-full inline-flex justify-center items-center gap-2 rounded-md bg-gray-900 text-white py-2.5 text-sm font-semibold hover:bg-black disabled:opacity-70"
                 >
-                  {loading ? "Signing in…" : "Sign in"}
+                  {loading ? "Logging in…" : "Log in"}
                 </button>
               </form>
 
@@ -189,11 +184,9 @@ export default function Signin() {
                 <button
                   type="button"
                   onClick={() => {
-                    // Store the current path to redirect back after login
                     const redirectPath = window.location.pathname;
                     localStorage.setItem('login_redirect', redirectPath);
                     
-                    // Redirect to the backend's Google OAuth endpoint
                     const redirectUri = `${window.location.origin}/auth/callback`;
                     const encodedUri = encodeURIComponent(redirectUri);
                     window.location.href = `${apiBase}/auth/google/login?redirect_uri=${encodedUri}`;

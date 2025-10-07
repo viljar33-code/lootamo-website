@@ -35,6 +35,9 @@ class User(Base):
     avatar_url = Column(String, nullable=True)
     
     social_accounts = relationship("SocialAccount", back_populates="user", lazy="selectin", cascade="all, delete-orphan")
+    wishlist_items = relationship("Wishlist", back_populates="user", cascade="all, delete-orphan", lazy="dynamic")
+    cart_items = relationship("Cart", back_populates="user", cascade="all, delete-orphan", lazy="dynamic")
+    orders = relationship("Order", back_populates="user", cascade="all, delete-orphan", lazy="dynamic")
     
     def __repr__(self):
         return f"<User(id={self.id}, email={self.role})>"

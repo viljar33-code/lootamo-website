@@ -3,7 +3,6 @@ import { useRouter } from 'next/router';
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
 import { getErrorMessage } from '@/utils/error';
 
-// API Response Types
 export interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
@@ -57,7 +56,6 @@ interface AuthContextType extends AuthState {
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const createApiInstance = (baseURL: string) => {
-  // Normalize and ensure a single versioned prefix
   const root = baseURL.replace(/\/$/, '');
   const baseWithV1 = /\/api\/v\d+$/i.test(root) ? root : `${root}/api/v1`;
   const instance = axios.create({
@@ -65,7 +63,6 @@ const createApiInstance = (baseURL: string) => {
     headers: {
       'Content-Type': 'application/json',
     },
-    // Using Authorization header for JWTs (not cookies)
     withCredentials: false,
   });
 
@@ -82,7 +79,6 @@ const createApiInstance = (baseURL: string) => {
     }
   );
 
-  // Add response interceptor to handle token refresh
   instance.interceptors.response.use(
     (response) => response,
     async (error) => {
@@ -90,9 +86,7 @@ const createApiInstance = (baseURL: string) => {
       const url = originalRequest?.url || '';
       const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register') || url.includes('/auth/password-reset');
 
-      // If the error is 401 and we haven't tried to refresh yet
       if (error.response?.status === 401 && !originalRequest._retry) {
-        // For auth endpoints, don't refresh or redirect; let UI display error
         if (isAuthEndpoint) {
           return Promise.reject(error);
         }
@@ -101,31 +95,25 @@ const createApiInstance = (baseURL: string) => {
         try {
           const refreshToken = localStorage.getItem('refresh_token');
           if (!refreshToken) {
-            // No refresh token: surface error so UI can decide next steps
             return Promise.reject(error);
           }
 
-          // Try to refresh the token
           const response = await axios.post(`${baseURL}/auth/refresh`, {
             refresh_token: refreshToken
           });
 
           const { access_token, refresh_token } = response.data;
 
-          // Store the new tokens
           localStorage.setItem('access_token', access_token);
           if (refresh_token) {
             localStorage.setItem('refresh_token', refresh_token);
           }
 
-          // Update the authorization header
           originalRequest.headers = originalRequest.headers || {};
           originalRequest.headers.Authorization = `Bearer ${access_token}`;
 
-          // Retry the original request with the new token
           return instance(originalRequest);
         } catch (refreshError) {
-          // If refresh fails, clear tokens but do not redirect automatically
           if (typeof window !== 'undefined') {
             localStorage.removeItem('access_token');
             localStorage.removeItem('refresh_token');
@@ -146,7 +134,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
   const apiBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '');
 
-  // State
   const [state, setState] = useState<AuthState>({
     user: null,
     loading: true,
@@ -154,11 +141,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isInitializing: true,
   });
 
-  // Refs
   const refreshTokenPromise = useRef<Promise<string> | null>(null);
   const api = useMemo(() => createApiInstance(apiBase), [apiBase]);
 
-  // Initialize auth token from localStorage on mount
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     if (token) {
@@ -166,7 +151,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [api]);
 
-  // Helper function to update state
   const updateState = useCallback((updates: Partial<AuthState>) => {
     setState(prev => ({
       ...prev,
@@ -174,7 +158,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }));
   }, []);
 
-  // Clear all auth data
   const clearAuthData = useCallback(async (): Promise<void> => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
@@ -195,7 +178,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [api, updateState]);
 
-  // Handle token refresh
   const refreshAccessToken = useCallback(async (): Promise<string> => {
     if (refreshTokenPromise.current) {
       return refreshTokenPromise.current;
@@ -236,22 +218,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [api, clearAuthData]);
 
-  // Logout function
   const logout = useCallback(async (): Promise<void> => {
     try {
       updateState({ loading: true });
 
-      // Clear all auth data
       await clearAuthData();
 
-      // Optional: Call backend logout endpoint if needed
       try {
         await api.post('/auth/logout');
       } catch (error) {
         console.warn('Logout API call failed, but continuing with client-side cleanup', error);
       }
 
-      // Redirect to login page
       router.push('/signin');
     } catch (error) {
       console.error('Error during logout:', error);
@@ -263,18 +241,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [api, clearAuthData, router, updateState]);
 
-  // Fetch user data with token refresh handling
   const fetchUserData = useCallback(async (): Promise<User> => {
     try {
       updateState({ loading: true });
 
-      // Ensure we have an access token
       const token = localStorage.getItem('access_token');
       if (!token) {
         throw new Error('No access token available');
       }
 
-      // Make sure the token is set in the headers
       if (api.defaults.headers.common) {
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       }
@@ -304,9 +279,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return userData;
       } catch (error) {
         const axiosError = error as AxiosError;
-        // Handle 403 - Forbidden (Insufficient permissions)
         if (axiosError.response?.status === 403) {
-          // Try to get user data from local storage as fallback
           const userStr = localStorage.getItem('user');
           if (userStr) {
             try {
@@ -329,19 +302,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const error = err as Error | AxiosError;
       console.error('Error fetching user data:', error);
 
-      // Handle 403 - Forbidden (Insufficient permissions)
       if ('response' in error && error.response?.status === 403) {
         throw new Error('You do not have permission to access this resource. Please contact an administrator.');
       }
 
-      // Handle 401 - Unauthorized (Token expired/invalid)
       const axiosError = error as AxiosError;
       if (axiosError.response?.status === 401) {
         try {
           const refreshToken = localStorage.getItem('refresh_token');
           if (refreshToken) {
             await refreshAccessToken();
-            // Retry the request with the new token
             return fetchUserData();
           }
         } catch (refreshError) {
@@ -362,7 +332,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [api, clearAuthData, refreshAccessToken, router, updateState]);
 
-  // Login with email/password
   const login = useCallback(async (
     email: string,
     password: string
@@ -370,7 +339,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       updateState({ loading: true, error: null });
 
-      // Do not throw on 4xx/5xx; handle manually for friendly errors
       const response = await api.post<{
         access_token: string;
         refresh_token: string;
@@ -395,31 +363,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       const { access_token, refresh_token } = response.data;
 
-      // Store tokens
       localStorage.setItem('access_token', access_token);
       localStorage.setItem('refresh_token', refresh_token);
 
-      // Update axios instance with new token
       if (api.defaults.headers.common) {
         api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
       }
 
-      // Fetch user data with the new token
       const user = await fetchUserData();
 
-      // Update state
       updateState({ user, loading: false, error: null });
 
-      // Store user data
       localStorage.setItem('user', JSON.stringify(user));
 
-      // Redirect based on role
       const redirectPath = user.role === 'admin' ? '/admin/dashboard' : '/';
       router.push(redirectPath);
 
       return { data: user };
     } catch (error) {
-      // Network or unexpected errors
       const errorMessage = getErrorMessage(error, 'Login failed. Please check your credentials.');
       updateState({ error: errorMessage, loading: false });
       return { error: errorMessage, status: (error as AxiosError)?.response?.status };
@@ -435,21 +396,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       updateState({ loading: true, error: null, isInitializing: true });
 
-      // Store tokens
       localStorage.setItem('access_token', accessToken);
       localStorage.setItem('refresh_token', refreshToken);
 
-      // Update axios instance with new token
       if (api.defaults.headers.common) {
         api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
       }
 
-      // Set token expiry (23 hours from now)
       const tokenExpiry = Date.now() + 23 * 60 * 60 * 1000;
       localStorage.setItem('token_expiry', tokenExpiry.toString());
 
       try {
-        // First try to get user data from the OAuth response (if available)
         const userStr = localStorage.getItem('user');
         if (userStr) {
           try {
@@ -466,9 +423,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
         }
 
-        // If no user data in localStorage, try to fetch it
         try {
-          // First try the /me endpoint
           const token = localStorage.getItem('access_token');
           if (!token) {
             throw new Error('No access token available');
@@ -495,7 +450,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } catch (meError) {
           console.warn('Failed to fetch user with /me endpoint, trying with user ID:', meError);
 
-          // If we have a userId, try to fetch the user by ID
           if (userId) {
             try {
               const response = await api.get<User>(`/users/${userId}`);
@@ -514,7 +468,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               const axiosIdError = idError as AxiosError;
               console.error('Failed to fetch user by ID:', axiosIdError);
 
-              // If we have user data in localStorage, use it as fallback
               const userStr = localStorage.getItem('user');
               if (userStr) {
                 try {
@@ -531,7 +484,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 }
               }
 
-              // If we have a 403, provide a more specific error message
               if (axiosIdError.response?.status === 403) {
                 throw new Error('You do not have permission to access user information');
               }
@@ -548,7 +500,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const statusCode = (error as AxiosError)?.response?.status || 500;
         const errorMessage = getErrorMessage(error, 'Authentication failed');
 
-        // Clear any potentially invalid auth data
         await clearAuthData();
 
         updateState({
@@ -563,7 +514,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         };
       }
 
-      // This should never be reached, but TypeScript needs a return
       return { error: 'An unknown error occurred during OAuth login' };
     } catch (error) {
       console.error('Unexpected error in loginWithOAuth:', error);
@@ -594,12 +544,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const url = originalRequest?.url || '';
         const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register') || url.includes('/auth/password-reset');
 
-        // If error is not 401 or we've already tried to refresh, reject
         if (!originalRequest || error.response?.status !== 401 || originalRequest._retry) {
           return Promise.reject(error);
         }
 
-        // Do not attempt refresh for auth endpoints; let UI handle the 401
         if (isAuthEndpoint) {
           return Promise.reject(error);
         }
@@ -609,11 +557,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
           const newToken = await refreshAccessToken();
 
-          // Update the auth header
           originalRequest.headers = originalRequest.headers || {};
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
 
-          // Retry the original request with new token
           return api(originalRequest);
         } catch (refreshError) {
           await logout();
@@ -628,7 +574,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [api, updateState, clearAuthData, refreshAccessToken, router, fetchUserData, logout]);
 
-  // Initialize auth state
   useEffect(() => {
     const initializeAuth = async () => {
       try {
@@ -639,7 +584,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           return;
         }
 
-        // If we have a token but no user data, fetch it
         await fetchUserData();
       } catch (error) {
         console.error('Auth initialization failed:', error);
@@ -655,7 +599,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     initializeAuth();
   }, [clearAuthData, fetchUserData, updateState]);
 
-  // Context value
   const value = useMemo(() => ({
     ...state,
     login,
@@ -680,7 +623,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-// Custom hook to use the auth context
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {

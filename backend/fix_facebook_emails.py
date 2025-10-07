@@ -7,7 +7,6 @@ import asyncio
 import sys
 import os
 
-# Add the backend directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from sqlalchemy import select, update
@@ -39,10 +38,10 @@ async def fix_facebook_emails():
             
             # Commit changes
             await db.commit()
-            print("✅ All Facebook emails updated successfully!")
+            print("All Facebook emails updated successfully!")
             
         except Exception as e:
-            print(f"❌ Error: {e}")
+            print(f"Error: {e}")
             await db.rollback()
         finally:
             await db.close()

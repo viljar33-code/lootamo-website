@@ -90,7 +90,6 @@ class AuthService:
 
     async def authenticate_user(self, login_data: UserLogin) -> Optional[User]:
         """Authenticate user with EMAIL ONLY and password"""
-        # Enforce email-only login. We do not attempt username lookup here.
         email_input = (login_data.email_or_username or "").strip().lower()
 
         user = await self.get_user_by_email(email_input)
@@ -116,7 +115,6 @@ class AuthService:
 
     async def get_user_by_email(self, email: str) -> Optional[User]:
         """Get user by email"""
-        # Case-insensitive email lookup to avoid case issues during login
         result = await self.db.execute(
             select(User).where(func.lower(User.email) == email.lower())
         )
@@ -194,7 +192,6 @@ class AuthService:
         self, user: User, current_password: str, new_password: str
     ) -> None:
         """Change password for an authenticated user after verifying current password"""
-        # Verify current password
         if not verify_password(current_password, user.hashed_password):
             from fastapi import HTTPException
 

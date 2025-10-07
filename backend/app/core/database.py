@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
@@ -34,7 +34,6 @@ AsyncSessionLocal = async_sessionmaker(
     expire_on_commit=False
 )
 
-# Sync engine for migrations and blocking tasks
 sync_engine = create_engine(
     SYNC_DATABASE_URL,
     echo=settings.DEBUG,
@@ -44,7 +43,6 @@ sync_engine = create_engine(
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sync_engine)
 
-# Base is now imported from app.db.base
 
 # Dependency to get async database session
 async def get_async_db():
@@ -63,7 +61,13 @@ def get_db():
         db.close()
 
 
+async def drop_tables():
+    """Drop all database tables with CASCADE"""
+    async with async_engine.begin() as conn:
+        await conn.execute(text("DROP SCHEMA public CASCADE; CREATE SCHEMA public;"))
+
+
 async def create_tables():
-    """Create database tables"""
+    """Create database tables if they don't exist"""
     async with async_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

@@ -30,7 +30,6 @@ export default function AdminOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
 
   useEffect(() => {
-    // Mock data for orders
     const mockOrders: Order[] = [
       { id: "ORD-001", email: "customer1@example.com", product: "McAfee Chat Enterprise 2024", status: "Pending", key: null, created: "2023-06-15" },
       { id: "ORD-002", email: "customer2@example.com", product: "The Callisto Protocol (GLOBAL)", status: "Completed", key: "XXXX-XXXX-XXXX-XXXX", created: "2023-06-14" },
@@ -53,7 +52,6 @@ export default function AdminOrders() {
     setSubmitting(true);
     try {
       await new Promise((r) => setTimeout(r, 1000));
-      // In a real app, you would call your API here
       const newOrder: Order = {
         id: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
         email,
@@ -76,36 +74,45 @@ export default function AdminOrders() {
         <title>Orders • Lootamo Admin</title>
       </Head>
       <AdminLayout>
-        <div className="space-y-6 p-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Orders & License Delivery</h1>
+        <div className="space-y-6">
+          {/* Header Section */}
+          <div className="bg-blue-600 text-white px-6 py-8 rounded-xl">
+            <h1 className="text-2xl font-bold">Orders & License Delivery</h1>
+            <p className="text-blue-100 mt-2">Manage customer orders, roles, and access permissions</p>
+          </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 px-6">
             {/* New Order Form */}
-            <div className="lg:col-span-2 bg-white rounded-xl shadow-lg p-5 border hover:shadow-xl transition-all duration-300">
-              <h2 className="text-lg font-semibold mb-4">Place New Order</h2>
+            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-all duration-300">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <FiShoppingCart className="text-blue-600 text-lg" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">Place New Order</h2>
+              </div>
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Customer Email</label>
-                    <div className="flex items-center gap-2 border rounded-lg px-3 py-2">
-                      <FiMail className="text-gray-400" />
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Customer Email</label>
+                    <div className="flex items-center gap-3 border border-gray-300 rounded-lg px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+                      <FiMail className="text-gray-500 text-lg" />
                       <input
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="customer@company.com"
-                        className="w-full py-1 text-sm outline-none"
+                        className="w-full text-sm outline-none placeholder-gray-400"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Product</label>
-                    <div className="flex items-center gap-2 border rounded-lg px-3 py-2">
-                      <FiShoppingCart className="text-gray-400" />
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Product</label>
+                    <div className="flex items-center gap-3 border border-gray-300 rounded-lg px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+                      <FiShoppingCart className="text-gray-500 text-lg" />
                       <select
                         value={product}
                         onChange={(e) => setProduct(e.target.value)}
-                        className="w-full py-1 text-sm outline-none bg-transparent"
+                        className="w-full text-sm outline-none bg-transparent"
                       >
                         <option value="">Select a product</option>
                         {products.map((p) => (
@@ -118,12 +125,14 @@ export default function AdminOrders() {
                   </div>
                 </div>
 
-                <div className="rounded-lg border bg-emerald-50 p-4">
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
                   <div className="flex items-start gap-3">
-                    <FiLock className="mt-0.5 text-emerald-600" />
+                    <div className="p-2 bg-emerald-100 rounded-lg">
+                      <FiLock className="text-emerald-600 text-lg" />
+                    </div>
                     <div>
-                      <h3 className="font-medium text-emerald-800">Secure Order Processing</h3>
-                      <p className="text-sm text-emerald-700">All orders are processed securely with end-to-end encryption.</p>
+                      <h3 className="font-semibold text-emerald-800">Secure Order Processing</h3>
+                      <p className="text-sm text-emerald-700 mt-1">All orders are processed securely with end-to-end encryption.</p>
                     </div>
                   </div>
                 </div>
@@ -131,32 +140,41 @@ export default function AdminOrders() {
                 <button
                   onClick={placeOrder}
                   disabled={!email || !product || submitting}
-                  className={`w-full flex items-center justify-center py-2 px-4 rounded-md text-white ${
+                  className={`w-full flex items-center justify-center py-3 px-6 rounded-lg font-semibold text-white transition-all duration-200 ${
                     !email || !product || submitting
                       ? 'bg-gray-400 cursor-not-allowed'
-                      : 'bg-blue-600 hover:bg-blue-700'
+                      : 'bg-blue-600 hover:bg-blue-700 hover:shadow-lg transform hover:-translate-y-0.5'
                   }`}
                 >
-                  <FiArrowRightCircle className="mr-2" />
+                  {submitting ? (
+                    <FiRefreshCw className="mr-2 animate-spin" />
+                  ) : (
+                    <FiArrowRightCircle className="mr-2" />
+                  )}
                   {submitting ? 'Placing Order...' : 'Place Order'}
                 </button>
               </div>
             </div>
 
-            {/* Order Summary */}
-            <div className="bg-white rounded-xl shadow-lg p-5 border hover:shadow-xl transition-all duration-300">
-              <h2 className="text-lg font-semibold mb-4">Recent Orders</h2>
+            {/* Recent Orders */}
+            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-all duration-300">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <FiEye className="text-green-600 text-lg" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">Recent Orders</h2>
+              </div>
               <div className="space-y-4">
                 {orders.length > 0 ? (
                   <div className="space-y-3">
                     {orders.map((order) => (
-                      <div key={order.id} className="border rounded-lg p-3 hover:bg-gray-50">
-                        <div className="flex justify-between items-start">
+                      <div key={order.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200">
+                        <div className="flex justify-between items-start mb-3">
                           <div>
-                            <p className="font-medium text-sm">Order #{order.id}</p>
-                            <p className="text-xs text-gray-500">{order.email}</p>
+                            <p className="font-semibold text-sm text-gray-900">Order #{order.id}</p>
+                            <p className="text-xs text-gray-500 mt-1">{order.email}</p>
                           </div>
-                          <span className={`text-xs px-2 py-1 rounded ${
+                          <span className={`text-xs px-3 py-1 rounded-full font-medium ${
                             order.status === 'Completed' 
                               ? 'bg-green-100 text-green-800' 
                               : 'bg-yellow-100 text-yellow-800'
@@ -164,12 +182,19 @@ export default function AdminOrders() {
                             {order.status}
                           </span>
                         </div>
-                        <p className="text-sm mt-2">{order.product}</p>
+                        <p className="text-sm text-gray-700 font-medium">{order.product}</p>
+                        <p className="text-xs text-gray-500 mt-2">Created: {order.created}</p>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500 text-sm text-center py-4">No orders yet</p>
+                  <div className="text-center py-8">
+                    <div className="p-3 bg-gray-100 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
+                      <FiShoppingCart className="text-gray-400 text-lg" />
+                    </div>
+                    <p className="text-gray-500 text-sm">No orders yet</p>
+                    <p className="text-gray-400 text-xs mt-1">Orders will appear here once placed</p>
+                  </div>
                 )}
               </div>
             </div>
