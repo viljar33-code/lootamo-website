@@ -41,6 +41,13 @@ class WishlistStatsResponse(BaseModel):
     total_products: int
 
 
+class WishlistAnalytics(BaseModel):
+    """Overall wishlist analytics for admin dashboard"""
+    total_wishlists: int
+    total_items: int
+    avg_items_per_user: float
+
+
 class WishlistSummary(BaseModel):
     """User wishlist summary"""
     total_items: int

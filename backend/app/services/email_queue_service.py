@@ -11,6 +11,7 @@ from sqlalchemy import and_, or_
 from app.core.database import SessionLocal
 from app.models.email_queue import EmailQueue
 from app.services.email_service import EmailService
+from app.services.retry_log_service import RetryLogService
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +96,24 @@ class EmailQueueService:
             ).limit(batch_size).all()
             
             for email in pending_emails:
+                retry_log_id = None
                 try:
+                    # Log retry start (skip order_id for email retries to avoid foreign key constraint)
+                    retry_log_id = RetryLogService.log_retry_start(
+                        db=db,
+                        retry_type="email_sending",
+                        attempt_number=email.attempts + 1,
+                        max_attempts=email.max_retries,
+                        order_id=None,  # Skip order_id to avoid foreign key constraint issues
+                        metadata={
+                            "email_id": email.id,
+                            "to_email": email.to_email,
+                            "subject": email.subject,
+                            "email_type": email.email_type,
+                            "original_order_id": email.order_id  # Store as metadata instead
+                        }
+                    )
+                    
                     # Mark as sending
                     email.status = "sending"
                     email.attempts += 1
@@ -114,17 +132,49 @@ class EmailQueueService:
                         email.sent_at = datetime.utcnow()
                         email.last_error = None
                         stats["sent"] += 1
+                        
+                        # Log retry success
+                        if retry_log_id:
+                            RetryLogService.log_retry_result(
+                                db=db,
+                                retry_log_id=retry_log_id,
+                                success=True
+                            )
+                        
                         logger.info(f"Email {email.id} sent successfully to {email.to_email}")
                     else:
                         if email.attempts >= email.max_retries:
                             email.status = "failed"
                             stats["failed"] += 1
+                            
+                            # Log final failure
+                            if retry_log_id:
+                                RetryLogService.log_retry_result(
+                                    db=db,
+                                    retry_log_id=retry_log_id,
+                                    success=False,
+                                    error_code="MAX_RETRIES_EXCEEDED",
+                                    error_message=f"Email sending failed after {email.attempts} attempts"
+                                )
+                            
                             logger.error(f"Email {email.id} failed permanently after {email.attempts} attempts")
                         else:
                             email.status = "pending"
                             retry_delay = 5 * (3 ** (email.attempts - 1))
                             email.next_retry_at = datetime.utcnow() + timedelta(minutes=retry_delay)
                             stats["retried"] += 1
+                            
+                            # Log retry failure (will retry)
+                            if retry_log_id:
+                                RetryLogService.log_retry_result(
+                                    db=db,
+                                    retry_log_id=retry_log_id,
+                                    success=False,
+                                    error_code="SEND_FAILED",
+                                    error_message="Email sending failed, will retry",
+                                    next_retry_at=email.next_retry_at
+                                )
+                            
                             logger.warning(f"⚠️ Email {email.id} failed, retry #{email.attempts} scheduled for {email.next_retry_at}")
                     
                     db.commit()
@@ -133,6 +183,17 @@ class EmailQueueService:
                     db.rollback()
                     email.status = "failed"
                     email.last_error = str(e)
+                    
+                    # Log exception failure
+                    if retry_log_id:
+                        RetryLogService.log_retry_result(
+                            db=db,
+                            retry_log_id=retry_log_id,
+                            success=False,
+                            error_code="EXCEPTION",
+                            error_message=str(e)
+                        )
+                    
                     db.commit()
                     stats["failed"] += 1
                     logger.error(f"❌ Error processing email {email.id}: {str(e)}")

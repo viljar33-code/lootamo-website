@@ -10,7 +10,7 @@ const nav = [
   { href: "/admin/users", label: "User Management", icon: <FiUsers /> },
   { href: "/admin/products", label: "Product Catalog", icon: <FiPackage /> },
   { href: "/admin/analytics", label: "Analytics & Reports", icon: <FiBarChart2 /> },
-  { href: "/admin/wishlist", label: "Wishlist Analytics", icon: <FiHeart /> },
+  // { href: "/admin/wishlist", label: "Wishlist Analytics", icon: <FiHeart /> },
   // { href: "/admin/import", label: "G2A Integration", icon: <FiUploadCloud /> },
   { href: "/admin/scheduler", label: "Sync Scheduler", icon: <FiSettings /> },
   { href: "/admin/logs", label: "System Monitoring", icon: <FiActivity /> },
@@ -101,7 +101,7 @@ export default function AdminSidebar({ isOpen = false, onClose }: { isOpen?: boo
       </div>
 
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex md:flex-col w-[300px] bg-slate-800 text-slate-100 min-h-screen">
+      <aside className="hidden md:fixed md:inset-y-0 md:left-0 md:flex md:flex-col md:w-72 bg-slate-800 text-slate-100 z-30">
         <div className="h-16 flex items-center px-4 border-b border-slate-800">
           <span className="text-lg font-semibold text-nowrap">Lootamo Admin</span>
         </div>

@@ -12,6 +12,7 @@ from sqlalchemy import text
 
 from app.core.database import SessionLocal
 from app.services.email_service import EmailService
+from app.services.retry_log_service import RetryLogService
 
 # Configure logging
 logging.basicConfig(
@@ -83,8 +84,23 @@ class EmailWorker:
             
             for email in pending_emails:
                 email_id, to_email, subject, html_content, text_content, attempts, max_retries = email
+                retry_log_id = None
                 
                 try:
+                    # Log retry attempt start (skip order_id to avoid foreign key constraint)
+                    retry_log_id = RetryLogService.log_retry_start(
+                        db=db,
+                        retry_type="email_sending",
+                        attempt_number=attempts + 1,
+                        max_attempts=max_retries,
+                        order_id=None,  # Skip order_id to avoid foreign key constraint issues
+                        metadata={
+                            "email_id": email_id,
+                            "to_email": to_email,
+                            "subject": subject
+                        }
+                    )
+                    
                     # Mark as sending
                     db.execute(text("""
                         UPDATE email_queue 
@@ -108,18 +124,27 @@ class EmailWorker:
                             SET status = 'sent', sent_at = NOW(), updated_at = NOW()
                             WHERE id = :email_id
                         """), {'email_id': email_id})
+                        
+                        # Log retry success
+                        if retry_log_id:
+                            RetryLogService.log_retry_result(
+                                db=db,
+                                retry_log_id=retry_log_id,
+                                success=True
+                            )
+                        
                         logger.info(f"✅ Email {email_id} sent to {to_email}")
                         sent_count += 1
                     else:
                         # Handle failure
-                        await self._handle_email_failure(db, email_id, attempts, max_retries, "Send failed")
+                        await self._handle_email_failure(db, email_id, attempts, max_retries, "Send failed", retry_log_id)
                         failed_count += 1
                     
                     db.commit()
                     
                 except Exception as e:
                     logger.error(f"❌ Error sending email {email_id}: {str(e)}")
-                    await self._handle_email_failure(db, email_id, attempts, max_retries, str(e))
+                    await self._handle_email_failure(db, email_id, attempts, max_retries, str(e), retry_log_id)
                     failed_count += 1
                     db.commit()
             
@@ -132,7 +157,7 @@ class EmailWorker:
         finally:
             db.close()
     
-    async def _handle_email_failure(self, db: Session, email_id: int, attempts: int, max_retries: int, error: str):
+    async def _handle_email_failure(self, db: Session, email_id: int, attempts: int, max_retries: int, error: str, retry_log_id: int = None):
         """Handle email sending failure with retry logic"""
         new_attempts = attempts + 1
         
@@ -148,6 +173,17 @@ class EmailWorker:
                 'attempts': new_attempts, 
                 'error': error[:500]
             })
+            
+            # Log final failure
+            if retry_log_id:
+                RetryLogService.log_retry_result(
+                    db=db,
+                    retry_log_id=retry_log_id,
+                    success=False,
+                    error_code="MAX_RETRIES_EXCEEDED",
+                    error_message=f"Email sending failed after {new_attempts} attempts: {error}"
+                )
+            
             logger.error(f"❌ Email {email_id} permanently failed after {new_attempts} attempts")
         else:
             # Schedule retry with exponential backoff
@@ -165,6 +201,18 @@ class EmailWorker:
                 'error': error[:500],
                 'next_retry': next_retry
             })
+            
+            # Log retry failure (will retry)
+            if retry_log_id:
+                RetryLogService.log_retry_result(
+                    db=db,
+                    retry_log_id=retry_log_id,
+                    success=False,
+                    error_code="SEND_FAILED",
+                    error_message=f"Email sending failed, will retry: {error}",
+                    next_retry_at=next_retry
+                )
+            
             logger.warning(f"⏰ Email {email_id} scheduled for retry in {retry_delay}s (attempt {new_attempts}/{max_retries})")
 
 

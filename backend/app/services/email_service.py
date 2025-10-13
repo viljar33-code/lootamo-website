@@ -12,6 +12,8 @@ from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
 
 from app.core.config import settings
+from app.services.retry_log_service import RetryLogService
+from app.services.error_log_service import ErrorLogService
 
 
 class EmailService:
@@ -39,9 +41,10 @@ class EmailService:
         html_content: str,
         text_content: Optional[str] = None,
         max_retries: int = 3,
-        retry_delay: float = 2.0
+        retry_delay: float = 2.0,
+        order_id: Optional[str] = None
     ) -> bool:
-        """Send an email with retry logic"""
+        """Send an email with retry logic (retry logging handled by caller)"""
         last_exception = None
         
         for attempt in range(max_retries + 1):
@@ -67,6 +70,7 @@ class EmailService:
                 
                 if attempt > 0:
                     print(f"Email sent successfully to {to_email} on attempt {attempt + 1}")
+                
                 return True
 
             except Exception as e:

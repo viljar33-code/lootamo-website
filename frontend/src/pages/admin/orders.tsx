@@ -1,29 +1,37 @@
 import Head from "next/head";
-import { useEffect, useMemo, useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/router";
+import { FiEye, FiRefreshCw, FiShoppingCart, FiMail, FiLock, FiArrowRightCircle } from "react-icons/fi";
 import AdminLayout from "@/components/layouts/AdminLayout";
-import { 
-  FiMail, 
-  FiShoppingCart, 
-  FiLock, 
-  FiKey, 
-  FiArrowRightCircle, 
-  FiRefreshCw, 
-  FiEye, 
-  FiSend 
-} from "react-icons/fi";
+import withAdminAuth from '@/hocs/withAdminAuth';
 
-type Order = {
+// Define Order interface
+interface Order {
   id: string;
   email: string;
   product: string;
   status: string;
   key: string | null;
   created: string;
+}
+
+interface OrderFilters {
+  status: string;
+  paymentStatus: string;
+  dateRange: string;
+  searchTerm: string;
+}
+
+interface OrderStats {
+  total: number;
+  pending: number;
+  completed: number;
+  failed: number;
+  revenue: number;
+  created: string;
 };
 
-export default function AdminOrders() {
-  const router = useRouter();
+function AdminOrders() {
   const [email, setEmail] = useState("");
   const [product, setProduct] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -204,3 +212,5 @@ export default function AdminOrders() {
     </>
   );
 }
+
+export default withAdminAuth(AdminOrders);

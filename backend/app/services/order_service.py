@@ -312,11 +312,16 @@ class OrderService:
             product = db.query(Product).filter(Product.id == item.product_id).first()
             order_item_responses.append(OrderItemResponse(
                 id=item.id,
+                order_id=item.order_id,
                 product_id=item.product_id,
-                product_name=product.name if product else f"Product {item.product_id}",
                 price=item.price,
                 quantity=item.quantity,
-                status=item.status
+                g2a_order_id=item.g2a_order_id,
+                g2a_transaction_id=item.g2a_transaction_id,
+                delivered_key=item.delivered_key,
+                status=item.status,
+                created_at=item.created_at,
+                updated_at=item.updated_at
             ))
         
         return MultiItemOrderResponse(
@@ -327,6 +332,7 @@ class OrderService:
             status=order.status,
             payment_status=order.payment_status,
             created_at=order.created_at,
+            updated_at=order.updated_at,
             order_items=order_item_responses
         )
 
@@ -497,6 +503,9 @@ class OrderService:
                     product_id=item.product_id,
                     price=item.price,
                     quantity=item.quantity,
+                    g2a_order_id=item.g2a_order_id,
+                    g2a_transaction_id=item.g2a_transaction_id,
+                    delivered_key=item.delivered_key,
                     status=item.status,
                     created_at=item.created_at,
                     updated_at=item.updated_at
@@ -542,3 +551,37 @@ class OrderService:
             Order.id == order_id,
             Order.user_id == user_id
         ).first()
+
+    @staticmethod
+    def get_user_order_statistics(db: Session, user_id: int) -> Dict[str, Any]:
+        """
+        Get order statistics for a specific user (admin use).
+        
+        Args:
+            db: Database session
+            user_id: User ID to get statistics for
+            
+        Returns:
+            Dictionary with total_orders, total_spent, and currency
+        """
+        from app.models.order import OrderStatus
+        from sqlalchemy import func
+        
+        # Only count paid and completed orders for statistics
+        valid_statuses = [OrderStatus.PAID.value, OrderStatus.COMPLETE.value]
+        
+        # Get total orders and total spent
+        result = db.query(
+            func.count(Order.id).label('total_orders'),
+            func.coalesce(func.sum(Order.total_price), 0.0).label('total_spent')
+        ).filter(
+            Order.user_id == user_id,
+            Order.status.in_(valid_statuses)
+        ).first()
+        
+        return {
+            'user_id': user_id,
+            'total_orders': result.total_orders if result else 0,
+            'total_spent': float(result.total_spent) if result else 0.0,
+            'currency': 'EUR'
+        }

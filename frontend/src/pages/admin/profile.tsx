@@ -1,25 +1,104 @@
 import Head from "next/head";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
+import { useEffect, useState, useCallback } from "react";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminHeader from "@/components/admin/AdminHeader";
-import { FiUser, FiMail, FiPhone, FiEdit2, FiLogOut, FiShield, FiBell, FiKey, FiSettings, FiActivity, FiCalendar, FiCheckCircle } from "react-icons/fi";
-import { FaBuilding } from "react-icons/fa";
+import { FiUser, FiMail, FiPhone, FiEdit2, FiLogOut, FiShield, FiBell, FiKey, FiActivity, FiCalendar, FiCheckCircle } from "react-icons/fi";
+import { useAuth } from "@/contexts/AuthContext";
+
+interface UserProfile {
+  id: number;
+  uuid: string;
+  email: string;
+  username: string;
+  first_name: string | null;
+  last_name: string | null;
+  role: string;
+  is_active: boolean;
+  is_verified: boolean;
+  is_superuser: boolean;
+  created_at: string;
+  updated_at: string;
+  last_login: string | null;
+  phone: string | null;
+  avatar_url: string | null;
+}
 
 export default function AdminProfile() {
-  const router = useRouter();
+  const { api, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  useEffect(() => {
-  }, [router]);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const user = {
-    name: "System Administrator",
-    email: "admin@lootamo.com",
-    phone: "+1 555 0100",
-    company: "Lootamo Inc.",
-    department: "Operations",
-    memberSince: "2025-09-09",
+  const fetchUserProfile = useCallback(async () => {
+    if (!api) return;
+    
+    try {
+      setLoading(true);
+      const response = await api.get('/auth/me');
+      setUser(response.data);
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+      setError('Failed to load profile data');
+    } finally {
+      setLoading(false);
+    }
+  }, [api]);
+
+  useEffect(() => {
+    fetchUserProfile();
+  }, [fetchUserProfile]);
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   };
+
+  const getFullName = () => {
+    if (!user) return 'Loading...';
+    if (user.first_name && user.last_name) {
+      return `${user.first_name} ${user.last_name}`;
+    }
+    return user.username || user.email;
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !user) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error || 'Failed to load profile'}</p>
+          <button 
+            onClick={fetchUserProfile}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -29,7 +108,7 @@ export default function AdminProfile() {
 
       <div className="min-h-screen bg-gray-100 flex">
         <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col md:ml-72">
           <AdminHeader onMenuClick={() => setSidebarOpen(true)} />
 
           <main className="px-4 sm:px-6 lg:px-8 py-6 space-y-8">
@@ -64,14 +143,14 @@ export default function AdminProfile() {
                         <FiUser />
                       </div>
                       <div>
-                        <div className="text-xl font-bold text-gray-900">{user.name}</div>
+                        <div className="text-xl font-bold text-gray-900">{getFullName()}</div>
                         <div className="text-sm text-gray-600 flex items-center gap-2 mt-1">
-                          <FiPhone className="text-xs" />
-                          {user.phone}
+                          <FiUser className="text-xs" />
+                          {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                         </div>
                         <div className="inline-flex items-center gap-1 mt-2 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
                           <FiCalendar className="text-xs" />
-                          Member since {user.memberSince}
+                          Member since {formatDate(user.created_at)}
                         </div>
                       </div>
                     </div>
@@ -131,9 +210,9 @@ export default function AdminProfile() {
                   <div className="p-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <label className="text-sm font-semibold text-gray-700">Full Name</label>
+                        <label className="text-sm font-semibold text-gray-700">Username</label>
                         <div className="p-4 border-2 border-gray-200 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 font-medium text-gray-900">
-                          {user.name}
+                          {user.username}
                         </div>
                       </div>
                       <div className="space-y-2">
@@ -146,18 +225,15 @@ export default function AdminProfile() {
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-semibold text-gray-700">Company</label>
-                        <div className="p-4 border-2 border-gray-200 rounded-xl bg-gradient-to-br from-purple-50 to-purple-100 flex items-center gap-3">
-                          <div className="p-2 bg-purple-200 rounded-lg">
-                            <FaBuilding className="text-purple-700" />
-                          </div>
-                          <span className="font-medium text-purple-900">{user.company}</span>
+                        <label className="text-sm font-semibold text-gray-700">First Name</label>
+                        <div className="p-4 border-2 border-gray-200 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 font-medium text-gray-900">
+                          {user.first_name || 'Not provided'}
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-semibold text-gray-700">Department</label>
+                        <label className="text-sm font-semibold text-gray-700">Last Name</label>
                         <div className="p-4 border-2 border-gray-200 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 font-medium text-gray-900">
-                          {user.department}
+                          {user.last_name || 'Not provided'}
                         </div>
                       </div>
                       <div className="space-y-2">
@@ -166,7 +242,35 @@ export default function AdminProfile() {
                           <div className="p-2 bg-green-200 rounded-lg">
                             <FiPhone className="text-green-700" />
                           </div>
-                          <span className="font-medium text-green-900">{user.phone}</span>
+                          <span className="font-medium text-green-900">{user.phone || 'Not provided'}</span>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-gray-700">Role</label>
+                        <div className="p-4 border-2 border-gray-200 rounded-xl bg-gradient-to-br from-purple-50 to-purple-100 flex items-center gap-3">
+                          <div className="p-2 bg-purple-200 rounded-lg">
+                            <FiShield className="text-purple-700" />
+                          </div>
+                          <span className="font-medium text-purple-900">{user.role.charAt(0).toUpperCase() + user.role.slice(1)}</span>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-gray-700">Account Status</label>
+                        <div className={`p-4 border-2 border-gray-200 rounded-xl bg-gradient-to-br flex items-center gap-3 ${
+                          user.is_active ? 'from-green-50 to-green-100' : 'from-red-50 to-red-100'
+                        }`}>
+                          <div className={`p-2 rounded-lg ${
+                            user.is_active ? 'bg-green-200' : 'bg-red-200'
+                          }`}>
+                            <FiCheckCircle className={user.is_active ? 'text-green-700' : 'text-red-700'} />
+                          </div>
+                          <span className={`font-medium ${
+                            user.is_active ? 'text-green-900' : 'text-red-900'
+                          }`}>
+                            {user.is_active ? 'Active' : 'Inactive'}
+                            {user.is_verified && ' • Verified'}
+                            {user.is_superuser && ' • Super User'}
+                          </span>
                         </div>
                       </div>
                       <div className="space-y-2">
@@ -175,7 +279,9 @@ export default function AdminProfile() {
                           <div className="p-2 bg-indigo-200 rounded-lg">
                             <FiCalendar className="text-indigo-700" />
                           </div>
-                          <span className="font-medium text-indigo-900">{user.memberSince}</span>
+                          <span className="font-medium text-indigo-900">
+                            {formatDate(user.created_at)}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -270,7 +376,9 @@ export default function AdminProfile() {
                       <div className="p-4 bg-gradient-to-br from-red-50 to-red-100 rounded-xl border border-red-200">
                         <div className="flex items-center justify-between">
                           <div className="font-semibold text-red-900">Logout from all devices</div>
-                          <button className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium">
+                          <button
+                          onClick={handleLogout}
+                           className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium">
                             <FiLogOut />
                             Logout
                           </button>

@@ -133,3 +133,14 @@ class ChangePassword(BaseModel):
         if 'new_password' in values and v != values['new_password']:
             raise ValueError('Passwords do not match')
         return v
+
+
+class UserOrderStatistics(BaseModel):
+    """User order statistics for admin view"""
+    user_id: int
+    total_orders: int
+    total_spent: float
+    currency: str = "EUR"
+    
+    class Config:
+        from_attributes = True

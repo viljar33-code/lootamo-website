@@ -230,7 +230,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.warn('Logout API call failed, but continuing with client-side cleanup', error);
       }
 
-      router.push('/signin');
+      // Check if user is on admin page and redirect accordingly
+      const isAdminPage = router.pathname.startsWith('/admin');
+      router.push(isAdminPage ? '/admin/login' : '/signin');
     } catch (error) {
       console.error('Error during logout:', error);
       updateState({
@@ -321,12 +323,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       }
 
-      const errorMessage = getErrorMessage(error, 'Failed to fetch user data');
+        const errorMessage = getErrorMessage(error, 'Failed to fetch user data');
 
-      updateState({
-        error: errorMessage,
-        loading: false,
-      });
+        updateState({
+          error: errorMessage,
+          loading: false,
+        });
 
       throw error;
     }

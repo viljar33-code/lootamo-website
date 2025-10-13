@@ -35,7 +35,7 @@ export default function PaymentSuccess() {
     const timer = setInterval(() => {
       setRedirectCountdown((prev) => {
         if (prev <= 1) {
-          router.push('/profile');
+          router.push('/profile/orders');
           return 0;
         }
         return prev - 1;
@@ -123,7 +123,7 @@ export default function PaymentSuccess() {
           {/* Action Buttons */}
           <div className="space-y-3">
             <Link 
-              href="/profile"
+              href="/profile/orders"
               className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-2xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 text-center block shadow-lg"
             >
               View My Orders
@@ -143,7 +143,7 @@ export default function PaymentSuccess() {
               <span>Redirecting in {redirectCountdown}s</span>
             </div>
             <button
-              onClick={() => router.push('/profile')}
+              onClick={() => router.push('/profile/orders')}
               className="text-blue-600 hover:text-blue-800 underline text-xs"
             >
               Skip waiting

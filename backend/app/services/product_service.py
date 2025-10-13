@@ -7,6 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.models.product import Product, Category, Image, Video, Restriction, Requirement, ProductSyncLog
 from app.services.g2a_service import fetch_all_products, fetch_products
 from app.core.database import SessionLocal, get_db
+from app.services.error_log_service import ErrorLogService
 
 def batches(iterable, batch_size):
     """Yield successive batches from iterable."""
@@ -34,6 +35,22 @@ def create_sync_log(db: Session, total_synced: int = 0, new_products: int = 0,
     except Exception as e:
         db.rollback()
         logging.error(f"Failed to create sync log: {str(e)}")
+        # Log sync log creation failure
+        try:
+            ErrorLogService.log_exception(
+                db=db,
+                exception=e,
+                error_type="PRODUCT_SYNC_LOG_FAILURE",
+                source_system="product_sync",
+                source_function="create_sync_log",
+                error_context={
+                    "total_synced": total_synced,
+                    "status": status
+                },
+                severity="error"
+            )
+        except Exception:
+            pass  # Don't let logging errors break the application
         raise
 
 def save_products(db: Session, products: list):
@@ -135,6 +152,19 @@ def mark_all_products_inactive(db: Session):
     except Exception as e:
         db.rollback()
         logging.error(f"Error marking products inactive: {str(e)}")
+        # Log product inactive marking failure
+        try:
+            ErrorLogService.log_exception(
+                db=db,
+                exception=e,
+                error_type="PRODUCT_INACTIVE_MARKING_FAILURE",
+                source_system="product_sync",
+                source_function="mark_all_products_inactive",
+                error_context={},
+                severity="error"
+            )
+        except Exception:
+            pass  # Don't let logging errors break the application
         raise
 
 
@@ -173,6 +203,19 @@ def cleanup_old_inactive_products(db: Session, days_threshold: int = 30) -> int:
     except Exception as e:
         db.rollback()
         logging.error(f"Error cleaning up old inactive products: {str(e)}")
+        # Log cleanup failure
+        try:
+            ErrorLogService.log_exception(
+                db=db,
+                exception=e,
+                error_type="PRODUCT_CLEANUP_FAILURE",
+                source_system="product_sync",
+                source_function="cleanup_old_inactive_products",
+                error_context={"days_threshold": days_threshold},
+                severity="error"
+            )
+        except Exception:
+            pass  # Don't let logging errors break the application
         raise
 
 
@@ -283,6 +326,23 @@ def save_products_batch(db: Session, products: List[dict]) -> tuple[int, int, in
     except SQLAlchemyError as e:
         db.rollback()
         logging.error(f"Database error in batch commit: {str(e)}")
+        # Log batch commit failure
+        try:
+            ErrorLogService.log_exception(
+                db=db,
+                exception=e,
+                error_type="PRODUCT_BATCH_COMMIT_FAILURE",
+                source_system="product_sync",
+                source_function="save_products_batch",
+                error_context={
+                    "batch_size": len(products),
+                    "success_count": success_count,
+                    "error_count": error_count
+                },
+                severity="critical"
+            )
+        except Exception:
+            pass  # Don't let logging errors break the application
         raise
         
     return success_count, error_count, new_products_count
@@ -353,6 +413,22 @@ async def sync_all_products(batch_size: int = 500, start_page: Optional[int] = N
     except Exception as e:
         error_msg = f"Failed to sync all products: {str(e)}"
         logger.error(error_msg)
+        # Log sync failure
+        db = SessionLocal()
+        try:
+            ErrorLogService.log_exception(
+                db=db,
+                exception=e,
+                error_type="PRODUCT_SYNC_FAILURE",
+                source_system="product_sync",
+                source_function="sync_all_products",
+                error_context={"batch_size": batch_size},
+                severity="critical"
+            )
+        except Exception:
+            pass  # Don't let logging errors break the application
+        finally:
+            db.close()
         return {
             "success": False,
             "total_products": 0,
@@ -499,6 +575,22 @@ async def sync_all_products_paginated(batch_size: int = 500) -> dict:
     except Exception as e:
         error_msg = f"Failed to sync products with pagination: {str(e)}"
         logger.error(error_msg)
+        # Log paginated sync failure
+        db_error = SessionLocal()
+        try:
+            ErrorLogService.log_exception(
+                db=db_error,
+                exception=e,
+                error_type="PRODUCT_PAGINATED_SYNC_FAILURE",
+                source_system="product_sync",
+                source_function="sync_all_products_paginated",
+                error_context={"batch_size": batch_size},
+                severity="critical"
+            )
+        except Exception:
+            pass  # Don't let logging errors break the application
+        finally:
+            db_error.close()
         
         db = next(get_db())
         try:

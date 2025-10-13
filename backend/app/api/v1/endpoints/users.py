@@ -5,8 +5,9 @@ from sqlalchemy import select
 
 from app.core.database import get_async_db
 from app.models.user import User
-from app.schemas.user import UserResponse, UserUpdate
+from app.schemas.user import UserResponse, UserUpdate, UserOrderStatistics
 from app.api.dependencies import get_current_active_user, require_admin, require_manager_or_admin
+from app.services.order_service import OrderService
 
 router = APIRouter()
 
@@ -128,3 +129,34 @@ async def activate_user(
     await db.commit()
     
     return {"message": f"User {user.email} activated successfully"}
+
+
+@router.get("/{user_id}/order-statistics", response_model=UserOrderStatistics)
+async def get_user_order_statistics(
+    user_id: int,
+    current_user: User = Depends(require_manager_or_admin),
+    db: AsyncSession = Depends(get_async_db)
+):
+    """Get user order statistics (manager/admin only)"""
+    # First verify the user exists
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Get order statistics using synchronous session
+    # Note: We need to use a synchronous session for the OrderService
+    from app.core.database import get_db
+    from sqlalchemy.orm import Session
+    
+    # Create a synchronous session for the OrderService
+    sync_db = next(get_db())
+    try:
+        stats = OrderService.get_user_order_statistics(sync_db, user_id)
+        return UserOrderStatistics(**stats)
+    finally:
+        sync_db.close()

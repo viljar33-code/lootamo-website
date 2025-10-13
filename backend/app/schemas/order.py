@@ -133,3 +133,36 @@ class OrderStatusUpdateRequest(BaseModel):
     """Request schema for updating order status"""
     status: Literal["pending", "paid", "complete", "cancelled", "expired"] = Field(..., description="New order status")
     reason: Optional[str] = Field(None, description="Reason for status change")
+
+
+class OrderItemResponse(BaseModel):
+    """Schema for order item responses"""
+    id: int
+    order_id: Optional[int] = None
+    product_id: str
+    price: float
+    quantity: int
+    g2a_order_id: Optional[str] = None
+    g2a_transaction_id: Optional[str] = None
+    delivered_key: Optional[str] = None
+    status: str
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    model_config = {"from_attributes": True}
+
+
+class MultiItemOrderResponse(BaseModel):
+    """Schema for multi-item order responses"""
+    id: int
+    user_id: int
+    total_price: float
+    currency: str
+    status: str
+    stripe_payment_intent_id: Optional[str] = None
+    payment_status: str
+    created_at: datetime
+    updated_at: datetime
+    order_items: List[OrderItemResponse] = []
+
+    model_config = {"from_attributes": True}

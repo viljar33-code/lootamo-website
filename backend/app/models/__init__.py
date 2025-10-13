@@ -7,8 +7,10 @@ from .order import Order
 from .order_item import OrderItem
 from .social_auth import SocialAccount
 from .email_queue import EmailQueue
+from .retry_log import RetryLog
+from .error_log import ErrorLog
 
 __all__ = [
     'Product', 'Category', 'Restriction', 'Requirement', 'Image', 'Video', 'ProductSyncLog',
-    'Wishlist', 'Cart', 'User', 'Order', 'OrderItem', 'SocialAccount', 'EmailQueue'
+    'Wishlist', 'Cart', 'User', 'Order', 'OrderItem', 'SocialAccount', 'EmailQueue', 'RetryLog', 'ErrorLog'
 ]

@@ -17,19 +17,47 @@ export interface AdminStats {
 
 export interface AdminUser {
   id: number;
+  uuid: string;
   email: string;
   username: string;
   first_name?: string;
   last_name?: string;
-  phone?: string;
   role: 'customer' | 'supplier' | 'manager' | 'admin';
   is_active: boolean;
   is_verified: boolean;
+  is_superuser: boolean;
   created_at: string;
   updated_at: string;
   last_login?: string;
+  phone?: string;
+  avatar_url?: string;
   total_orders?: number;
   total_spent?: number;
+}
+
+export interface ErrorLog {
+  id: number;
+  display_message: string;
+  severity: string;
+  error_type: string;
+  created_at: string;
+  is_resolved: boolean;
+}
+
+export interface ErrorLogResponse {
+  error_logs: ErrorLog[];
+  total: number;
+  page: number;
+  per_page: number;
+  total_pages: number;
+}
+
+export interface ErrorStats {
+  totalErrors: number;
+  criticalErrors: number;
+  resolvedErrors: number;
+  pendingErrors: number;
+  errorTypes: { [key: string]: number };
 }
 
 export interface AdminOrder {
@@ -75,23 +103,30 @@ export interface PaymentStats {
 }
 
 export interface WishlistStats {
-  totalWishlists: number;
-  totalItems: number;
-  averageItemsPerUser: number;
-  mostWishlistedProducts: Array<{
+  total_wishlists: number;
+  total_items: number;
+  avg_items_per_user: number;
+  mostWishlistedProducts?: Array<{
     product_id: string;
     product_name: string;
     wishlist_count: number;
   }>;
 }
 
+export interface WishlistStatsResponse {
+  stats: Array<{
+    product_id: string;
+    product_name: string;
+    user_count: number;
+  }>;
+  total_products: number;
+}
+
 export interface CartStats {
-  totalCarts: number;
-  totalItems: number;
-  totalValue: number;
-  averageCartValue: number;
-  abandonedCarts: number;
-  conversionRate: number;
+  active_carts_value: number;
+  avg_cart_value: number;
+  total_items: number;
+  conversion_rate: number;
 }
 
 export interface SchedulerStatus {
@@ -108,6 +143,39 @@ export interface ProductSyncStats {
   inactiveProducts: number;
   lastSyncTime?: string;
   syncStatus: 'idle' | 'running' | 'success' | 'error';
+}
+
+export interface RetryLog {
+  id: number;
+  retry_type: string;
+  attempt_number: number;
+  max_attempts: number;
+  status: string;
+  error_code: string | null;
+  error_message: string | null;
+  retry_metadata: string;
+  order_id: number | null;
+  order_item_id: number | null;
+  g2a_order_id: string | null;
+  started_at: string;
+  completed_at: string | null;
+  next_retry_at: string | null;
+}
+
+export interface RetryLogsResponse {
+  retry_logs: RetryLog[];
+  total: number;
+  skip: number;
+  limit: number;
+  total_pages: number;
+}
+
+export interface RetryStats {
+  totalRetries: number;
+  successfulRetries: number;
+  failedRetries: number;
+  pendingRetries: number;
+  retryTypes: { [key: string]: number };
 }
 
 export class AdminService {
@@ -303,35 +371,64 @@ export class AdminService {
   }
 
   // Wishlist Analytics
-  async getWishlistStats(): Promise<WishlistStats> {
+  async getWishlistStats(): Promise<WishlistStatsResponse> {
     try {
       const response = await this.api.get('/wishlist/stats');
       return response.data;
     } catch (error) {
       console.error('Failed to fetch wishlist stats:', error);
       return {
-        totalWishlists: 0,
-        totalItems: 0,
-        averageItemsPerUser: 0,
-        mostWishlistedProducts: []
+        stats: [],
+        total_products: 0
+      };
+    }
+  }
+
+  // New Wishlist Analytics
+  async getWishlistAnalytics(): Promise<WishlistStats> {
+    try {
+      const response = await this.api.get('/wishlist/analytics');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch wishlist stats:', error);
+      return {
+        total_wishlists: 0,
+        total_items: 0,
+        avg_items_per_user: 0,
       };
     }
   }
 
   // Cart Analytics
-  async getCartStats(): Promise<CartStats> {
+  // async getCartStats(): Promise<CartStats> {
+  //   try {
+  //     const response = await this.api.get('/cart/stats');
+  //     return response.data;
+  //   } catch (error) {
+  //     console.error('Failed to fetch cart stats:', error);
+  //     return {
+  //       totalCarts: 0,
+  //       totalItems: 0,
+  //       totalValue: 0,
+  //       averageCartValue: 0,
+  //       abandonedCarts: 0,
+  //       conversionRate: 0
+  //     };
+  //   }
+  // }
+
+  // New Cart Analytics
+  async getCartAnalytics(): Promise<CartStats> {
     try {
-      const response = await this.api.get('/cart/stats');
+      const response = await this.api.get('/cart/analytics');
       return response.data;
     } catch (error) {
       console.error('Failed to fetch cart stats:', error);
       return {
-        totalCarts: 0,
-        totalItems: 0,
-        totalValue: 0,
-        averageCartValue: 0,
-        abandonedCarts: 0,
-        conversionRate: 0
+        active_carts_value: 0,
+        avg_cart_value: 0,
+        total_items: 0,
+        conversion_rate: 0
       };
     }
   }
@@ -356,7 +453,7 @@ export class AdminService {
     }
   }
 
-  async getSchedulerJobs(): Promise<any[]> {
+  async getSchedulerJobs(): Promise<unknown[]> {
     try {
       const response = await this.api.get('/scheduler/jobs');
       return response.data.jobs || [];
@@ -396,6 +493,96 @@ export class AdminService {
         activeProducts: 0,
         inactiveProducts: 0,
         syncStatus: 'error'
+      };
+    }
+  }
+
+  // Retry Logs Management
+  async getRetryLogs(skip: number = 0, limit: number = 10): Promise<RetryLogsResponse> {
+    try {
+      const response = await this.api.get(`/retry-logs?skip=${skip}&limit=${limit}`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch retry logs:', error);
+      return {
+        retry_logs: [],
+        total: 0,
+        skip: 0,
+        limit: 50,
+        total_pages: 0
+      };
+    }
+  }
+
+  async deleteRetryLog(retryLogId: number): Promise<{ message: string; deleted_count: number }> {
+    const response = await this.api.delete(`/retry-logs/${retryLogId}`);
+    return response.data;
+  }
+
+  calculateRetryStatsFromLogs(logs: RetryLog[]): RetryStats {
+    const totalRetries = logs.length;
+    const successfulRetries = logs.filter(log => log.status === 'success').length;
+    const failedRetries = logs.filter(log => log.status === 'failed').length;
+    const pendingRetries = logs.filter(log => log.status === 'pending').length;
+    
+    // Count retry types
+    const retryTypes: { [key: string]: number } = {};
+    logs.forEach(log => {
+      retryTypes[log.retry_type] = (retryTypes[log.retry_type] || 0) + 1;
+    });
+    
+    return {
+      totalRetries,
+      successfulRetries,
+      failedRetries,
+      pendingRetries,
+      retryTypes
+    };
+  }
+
+  // Error Logs API methods
+  async getErrorLogs(page: number = 1, limit: number = 50): Promise<ErrorLogResponse> {
+    const skip = (page - 1) * limit;
+    const response = await this.api.get(`/error-logs/?skip=${skip}&limit=${limit}`);
+    return response.data;
+  }
+
+  async deleteErrorLog(errorLogId: number): Promise<{ message: string }> {
+    const response = await this.api.delete(`/error-logs/${errorLogId}`);
+    return response.data;
+  }
+
+  async getErrorStats(): Promise<ErrorStats> {
+    try {
+      const response = await this.getErrorLogs(1, 50); // Get logs for stats
+      const logs = response.error_logs;
+      
+      const totalErrors = logs.length;
+      const criticalErrors = logs.filter(log => log.severity === 'critical').length;
+      const resolvedErrors = logs.filter(log => log.is_resolved === true).length;
+      const pendingErrors = logs.filter(log => log.is_resolved === false).length;
+      
+      // Count error types
+      const errorTypes: { [key: string]: number } = {};
+      logs.forEach(log => {
+        errorTypes[log.error_type] = (errorTypes[log.error_type] || 0) + 1;
+      });
+      
+      return {
+        totalErrors,
+        criticalErrors,
+        resolvedErrors,
+        pendingErrors,
+        errorTypes
+      };
+    } catch (error) {
+      console.error('Failed to fetch error stats:', error);
+      return {
+        totalErrors: 0,
+        criticalErrors: 0,
+        resolvedErrors: 0,
+        pendingErrors: 0,
+        errorTypes: {}
       };
     }
   }

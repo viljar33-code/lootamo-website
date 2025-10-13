@@ -10,6 +10,7 @@ from app.models.user import User, UserRole
 from app.schemas.product import ProductResponse
 from app.schemas.wishlist import (
     WishlistActionResponse,
+    WishlistAnalytics,
     WishlistBulkAddToCartResponse,
     WishlistClearResponse,
     WishlistItem,
@@ -24,6 +25,7 @@ from app.services.wishlist_service import (
     add_to_wishlist,
     clear_user_wishlist,
     get_user_wishlist,
+    get_wishlist_analytics,
     get_wishlist_stats,
     get_wishlist_summary,
     remove_from_wishlist,
@@ -196,6 +198,33 @@ async def get_admin_wishlist_stats(
         
     except Exception as e:
         logger.error(f"Error getting wishlist stats: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.get("/analytics", response_model=WishlistAnalytics)
+async def get_admin_wishlist_analytics(
+    current_user: User = Depends(get_current_user_sync),
+    db: Session = Depends(get_db)
+):
+    """Get overall wishlist analytics for admin dashboard"""
+    # Check admin permissions
+    if current_user.role not in [UserRole.ADMIN, UserRole.MANAGER]:
+        raise HTTPException(
+            status_code=403, 
+            detail="Insufficient permissions. Admin or Manager role required."
+        )
+    
+    try:
+        analytics_data = get_wishlist_analytics(db)
+        
+        return WishlistAnalytics(
+            total_wishlists=analytics_data["total_wishlists"],
+            total_items=analytics_data["total_items"],
+            avg_items_per_user=analytics_data["avg_items_per_user"]
+        )
+        
+    except Exception as e:
+        logger.error(f"Error getting wishlist analytics: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 

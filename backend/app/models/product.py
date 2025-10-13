@@ -121,12 +121,12 @@ class ProductSyncLog(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     run_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
     completed_at = Column(DateTime(timezone=True), nullable=True)
-    runtime_seconds = Column(Float, nullable=True)  # Total sync runtime
+    runtime_seconds = Column(Float, nullable=True)      
     total_synced = Column(Integer, nullable=False, default=0)
     new_products = Column(Integer, nullable=False, default=0)
     updated_products = Column(Integer, nullable=False, default=0)
     inactive_products = Column(Integer, nullable=False, default=0)
-    pages_processed = Column(Integer, nullable=False, default=0)  # Track pagination
+    pages_processed = Column(Integer, nullable=False, default=0)  
     batches_processed = Column(Integer, nullable=False, default=0)  # Track batch processing
     status = Column(String, nullable=False, index=True)  # success, failed, partial
     error_message = Column(Text, nullable=True)

@@ -85,6 +85,14 @@ class CartStatsResponse(BaseModel):
     total_products: int
 
 
+class CartAnalytics(BaseModel):
+    """Overall cart analytics for admin dashboard"""
+    active_carts_value: float
+    avg_cart_value: float
+    total_items: int
+    conversion_rate: float
+
+
 class CartQuantityUpdateRequest(BaseModel):
     """Request schema for PATCH quantity update"""
     quantity: int = Field(..., ge=1, description="New quantity (must be >= 1)")

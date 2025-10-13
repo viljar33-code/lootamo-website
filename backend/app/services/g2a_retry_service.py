@@ -256,6 +256,10 @@ class G2ARetryService:
         """
         logger.info(f"Starting license key retry for order item {order_item_id} (max {max_retries} attempts)")
         
+        # Create initial retry log
+        from app.services.retry_log_service import RetryLogService
+        retry_log = None
+        
         for attempt in range(max_retries):
             logger.info(f"Retry attempt {attempt + 1}/{max_retries} for order item {order_item_id}")
             
@@ -269,6 +273,15 @@ class G2ARetryService:
                 if not order_item.g2a_order_id:
                     logger.error(f"No G2A order ID for order item {order_item_id}")
                     return False
+                
+                # Log retry attempt start
+                if not retry_log:
+                    retry_log = RetryLogService.log_license_key_retry_start(
+                        order_item_id=order_item_id,
+                        g2a_order_id=order_item.g2a_order_id,
+                        attempt_number=attempt + 1,
+                        max_attempts=max_retries
+                    )
                 
                 try:
                     key_response = await get_g2a_order_key(order_item.g2a_order_id)
@@ -287,6 +300,14 @@ class G2ARetryService:
                         
                         logger.info(f"License key retrieved successfully for order item {order_item_id}: {license_key}")
                         
+                        # Log successful retry
+                        if retry_log:
+                            RetryLogService.log_license_key_retry_result(
+                                retry_log_id=retry_log.id,
+                                success=True,
+                                license_key=license_key
+                            )
+                        
                         order = db.query(Order).filter(Order.id == order_item.order_id).first()
                         if order:
                             from app.services.payment_service import PaymentService
@@ -294,40 +315,23 @@ class G2ARetryService:
                         
                         await G2ARetryService._send_license_key_email_for_item(order_item, db)
                         
-                        return True
-                        
-                    elif key_response and "error" in key_response:
-                        error_code = key_response["error"]
-                        
-                        if error_code == "ORD01":
-                            logger.error(f"Invalid G2A order ID (ORD01) for order item {order_item_id}")
-                            order_item.status = "failed"
-                            db.commit()
-                            return False
-                        elif error_code == "ORD03":
-                            logger.warning(f"License key not ready yet (ORD03) for order item {order_item_id}, attempt {attempt + 1}")
-                            # Continue to retry
-                        elif error_code == "ORD04":
-                            logger.warning(f"License key already delivered (ORD04) for order item {order_item_id}")
-                            order_item.status = "complete"
-                            db.commit()
-                            
-                            order = db.query(Order).filter(Order.id == order_item.order_id).first()
-                            if order:
-                                from app.services.payment_service import PaymentService
-                                await PaymentService._update_order_status_if_all_items_complete(db, order)
-                            
-                            return False
-                        else:
-                            logger.error(f"Unknown G2A error for order item {order_item_id}: {error_code}")
-                            order_item.status = "failed"
-                            db.commit()
-                            return False
                     else:
-                        logger.warning(f"Unexpected G2A response for order item {order_item_id}: {key_response}")
+                        logger.error(f"Unknown G2A error for order item {order_item_id}: {error_code}")
+                        order_item.status = "failed"
+                        db.commit()
                         
-                except Exception as e:
-                    logger.error(f"Error retrieving license key for order item {order_item_id}: {e}")
+                        # Log failed retry
+                        if retry_log:
+                            RetryLogService.log_license_key_retry_result(
+                                retry_log_id=retry_log.id,
+                                success=False,
+                                error_code=error_code,
+                                error_message=f"Unknown G2A error: {error_code}"
+                            )
+                        return False
+                else:
+                    logger.warning(f"Unexpected G2A response for order item {order_item_id}: {key_response}")
+                    
                 
             except Exception as e:
                 logger.error(f"Database error for order item {order_item_id}: {e}")
@@ -339,6 +343,15 @@ class G2ARetryService:
                 delay = retry_delay_seconds * (2 ** attempt)
                 logger.info(f"Waiting {delay} seconds before next retry...")
                 await asyncio.sleep(delay)
+        
+        # Log final failure after all retries exhausted
+        if retry_log:
+            RetryLogService.log_license_key_retry_result(
+                retry_log_id=retry_log.id,
+                success=False,
+                error_code="MAX_RETRIES_EXCEEDED",
+                error_message=f"Failed after {max_retries} retry attempts"
+            )
         
         db = SessionLocal()
         try:

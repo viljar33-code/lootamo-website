@@ -33,6 +33,7 @@ class OrderItem(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     order = relationship("Order", back_populates="order_items")
+    retry_logs = relationship("RetryLog", back_populates="order_item", cascade="all, delete-orphan")
     
     __table_args__ = (
         Index('idx_order_item_order_id', 'order_id'),

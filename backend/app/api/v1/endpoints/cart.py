@@ -20,6 +20,7 @@ from app.schemas.cart import (
     CartClearResponse,
     CartBulkDeleteResponse,
     CartStatsResponse,
+    CartAnalytics,
     CartItem
 )
 from app.services.cart_service import (
@@ -31,6 +32,7 @@ from app.services.cart_service import (
     get_cart_summary,
     clear_cart,
     get_cart_stats,
+    get_cart_analytics,
     get_cart_item_count
 )
 
@@ -280,6 +282,31 @@ async def get_admin_cart_stats(
         
     except Exception as e:
         logger.error(f"Error getting cart stats: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.get("/analytics", response_model=CartAnalytics)
+async def get_admin_cart_analytics(
+    current_user: User = Depends(get_current_user_sync),
+    db: Session = Depends(get_db)
+):
+    """Get overall cart analytics for admin dashboard"""
+    # Check admin permissions
+    if current_user.role not in [UserRole.ADMIN, UserRole.MANAGER]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    
+    try:
+        analytics_data = get_cart_analytics(db)
+        
+        return CartAnalytics(
+            active_carts_value=analytics_data["active_carts_value"],
+            avg_cart_value=analytics_data["avg_cart_value"],
+            total_items=analytics_data["total_items"],
+            conversion_rate=analytics_data["conversion_rate"]
+        )
+        
+    except Exception as e:
+        logger.error(f"Error getting cart analytics: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 

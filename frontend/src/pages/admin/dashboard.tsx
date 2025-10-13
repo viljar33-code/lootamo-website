@@ -4,8 +4,9 @@ import { FiUploadCloud, FiKey, FiDollarSign, FiUsers, FiShoppingCart, FiCreditCa
 import AdminLayout from "@/components/layouts/AdminLayout";
 import { useAuth } from '@/contexts/AuthContext';
 import { AdminService, AdminStats } from '@/services/adminService';
+import withAdminAuth from '@/hocs/withAdminAuth';
 
-export default function AdminDashboard() {
+function AdminDashboard() {
   const { api } = useAuth();
   const [stats, setStats] = useState<AdminStats>({
     totalOrders: 0,
@@ -260,3 +261,5 @@ export default function AdminDashboard() {
     </>
   );
 }
+
+export default withAdminAuth(AdminDashboard);

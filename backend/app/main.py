@@ -10,13 +10,14 @@ from app.core.database import create_tables
 from app.core.redis import get_redis_client, close_redis_client
 from app.api.v1.api import api_router
 from app.middleware.rate_limit import RateLimitMiddleware
+from app.middleware.error_logging import ErrorLoggingMiddleware
 from app.services.scheduler_service import scheduler_service
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app_instance: FastAPI):
     await create_tables()
-    redis_client = await get_redis_client()
+    await get_redis_client()
     
     await scheduler_service.start()
     
@@ -88,8 +89,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-redis_client = None
-app.add_middleware(RateLimitMiddleware, redis_client=redis_client)
+# Rate limiting middleware - will use memory fallback if Redis unavailable
+app.add_middleware(RateLimitMiddleware)
+
+# Error logging middleware - automatically logs unhandled exceptions
+app.add_middleware(ErrorLoggingMiddleware)
 
 app.include_router(api_router, prefix="/api/v1")
 

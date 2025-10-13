@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Numeric, ForeignKey, Text, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from datetime import datetime, timedelta
@@ -44,6 +44,7 @@ class Order(Base):
 
     user = relationship("User", back_populates="orders")
     order_items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
+    retry_logs = relationship("RetryLog", back_populates="order", cascade="all, delete-orphan")
     
     PENDING_ORDER_EXPIRY_HOURS = 24
     

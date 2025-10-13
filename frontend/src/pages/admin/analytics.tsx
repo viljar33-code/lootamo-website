@@ -4,12 +4,13 @@ import { FiDollarSign, FiShoppingCart, FiUsers, FiTrendingUp, FiRefreshCw, FiDow
 import AdminLayout from "@/components/layouts/AdminLayout";
 import { useAuth } from '@/contexts/AuthContext';
 import { AdminService, PaymentStats, CartStats, WishlistStats } from '@/services/adminService';
+import withAdminAuth from '@/hocs/withAdminAuth';
 import { 
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
 } from 'recharts';
 
-export default function AdminAnalytics() {
+function AdminAnalytics() {
   const { api } = useAuth();
   const [paymentStats, setPaymentStats] = useState<PaymentStats>({
     totalPayments: 0,
@@ -22,19 +23,22 @@ export default function AdminAnalytics() {
     averageOrderValue: 0
   });
   const [cartStats, setCartStats] = useState<CartStats>({
-    totalCarts: 0,
-    totalItems: 0,
-    totalValue: 0,
-    averageCartValue: 0,
-    abandonedCarts: 0,
-    conversionRate: 0
+    active_carts_value: 0,
+    avg_cart_value: 0,
+    total_items: 0,
+    conversion_rate: 0
   });
   const [wishlistStats, setWishlistStats] = useState<WishlistStats>({
-    totalWishlists: 0,
-    totalItems: 0,
-    averageItemsPerUser: 0,
+    total_wishlists: 0,
+    total_items: 0,
+    avg_items_per_user: 0,
     mostWishlistedProducts: []
   });
+  const [mostWishlistedProducts, setMostWishlistedProducts] = useState<Array<{
+    product_id: string;
+    product_name: string;
+    user_count: number;
+  }>>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -47,15 +51,17 @@ export default function AdminAnalytics() {
       setLoading(true);
       const adminService = new AdminService(api);
       
-      const [payments, carts, wishlists] = await Promise.all([
+      const [payments, carts, wishlists, wishlistProductStats] = await Promise.all([
         adminService.getPaymentStats(),
-        adminService.getCartStats(),
-        adminService.getWishlistStats()
+        adminService.getCartAnalytics(),
+        adminService.getWishlistAnalytics(),
+        adminService.getWishlistStats(),
       ]);
 
       setPaymentStats(payments);
       setCartStats(carts);
       setWishlistStats(wishlists);
+      setMostWishlistedProducts(wishlistProductStats.stats || []);
     } catch (error) {
       console.error('Failed to fetch analytics:', error);
     } finally {
@@ -245,27 +251,27 @@ export default function AdminAnalytics() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-6 border border-gray-200 hover:shadow-md transition-all duration-200">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-indigo-700 mb-1">€{loading ? '---' : (cartStats.totalValue ?? 0).toFixed(2)}</div>
+                    <div className="text-3xl font-bold text-indigo-700 mb-1">€{loading ? '---' : (cartStats.active_carts_value ?? 0).toFixed(2)}</div>
                     <div className="text-sm font-medium text-gray-700">Active Carts Value</div>
                   </div>
                 </div>
                 <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-xl p-6 border border-gray-200 hover:shadow-md transition-all duration-200">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-cyan-700 mb-1">€{loading ? '---' : (cartStats.averageCartValue ?? 0).toFixed(2)}</div>
+                    <div className="text-3xl font-bold text-cyan-700 mb-1">€{loading ? '---' : (cartStats.avg_cart_value ?? 0).toFixed(2)}</div>
                     <div className="text-sm font-medium text-gray-700">Avg Cart Value</div>
                   </div>
                 </div>
                 <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-xl p-6 border border-gray-200 hover:shadow-md transition-all duration-200">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-teal-700 mb-1">{loading ? '---' : (cartStats.totalItems ?? 0)}</div>
+                    <div className="text-3xl font-bold text-teal-700 mb-1">{loading ? '---' : (cartStats.total_items ?? 0)}</div>
                     <div className="text-sm font-medium text-gray-700">Total Items</div>
                   </div>
                 </div>
                 <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border border-gray-200 hover:shadow-md transition-all duration-200">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-emerald-700 mb-1">{loading ? '---' : (cartStats.conversionRate ?? 0).toFixed(1)}%</div>
+                    <div className="text-3xl font-bold text-emerald-700 mb-1">{loading ? '---' : (cartStats.conversion_rate ?? 0).toFixed(1)}%</div>
                     <div className="text-sm font-medium text-gray-700 mb-2">Conversion Rate</div>
-                    <div className="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded-full">{loading ? '--' : (cartStats.abandonedCarts ?? 0)} abandoned</div>
+                    <div className="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded-full">0 abandoned</div>
                   </div>
                 </div>
               </div>
@@ -278,8 +284,8 @@ export default function AdminAnalytics() {
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart
                       data={[
-                        { name: 'Total Value', value: cartStats.totalValue || 0 },
-                        { name: 'Avg Cart Value', value: cartStats.averageCartValue || 0 }
+                        { name: 'Total Value', value: cartStats.active_carts_value || 0 },
+                        { name: 'Avg Cart Value', value: cartStats.avg_cart_value || 0 }
                       ]}
                     >
                       <CartesianGrid strokeDasharray="3 3" />
@@ -298,20 +304,20 @@ export default function AdminAnalytics() {
                     <PieChart>
                       <Pie
                         data={[
-                          { name: 'Active Carts', value: (cartStats.totalCarts || 0) - (cartStats.abandonedCarts || 0), color: '#10b981' },
-                          { name: 'Abandoned', value: cartStats.abandonedCarts || 0, color: '#f97316' }
+                          { name: 'Active Carts', value: cartStats.total_items || 0, color: '#10b981' },
+                          { name: 'Abandoned', value: 0, color: '#f97316' }
                         ]}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        label={({ name, percent }: { name: string; percent: number }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                         outerRadius={80}
                         fill="#8884d8"
                         dataKey="value"
                       >
                         {[
-                          { name: 'Active Carts', value: (cartStats.totalCarts || 0) - (cartStats.abandonedCarts || 0), color: '#10b981' },
-                          { name: 'Abandoned', value: cartStats.abandonedCarts || 0, color: '#f97316' }
+                          { name: 'Active Carts', value: cartStats.total_items || 0, color: '#10b981' },
+                          { name: 'Abandoned', value: 0, color: '#f97316' }
                         ].map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
@@ -342,19 +348,19 @@ export default function AdminAnalytics() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                 <div className="bg-gradient-to-br from-violet-50 to-violet-100 rounded-xl p-6 border border-gray-200 hover:shadow-md transition-all duration-200">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-violet-700 mb-1">{loading ? '---' : (wishlistStats.totalWishlists ?? 0)}</div>
+                    <div className="text-3xl font-bold text-violet-700 mb-1">{loading ? '---' : (wishlistStats.total_wishlists ?? 0)}</div>
                     <div className="text-sm font-medium text-gray-700">Total Wishlists</div>
                   </div>
                 </div>
                 <div className="bg-gradient-to-br from-fuchsia-50 to-fuchsia-100 rounded-xl p-6 border border-gray-200 hover:shadow-md transition-all duration-200">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-fuchsia-700 mb-1">{loading ? '---' : (wishlistStats.totalItems ?? 0)}</div>
+                    <div className="text-3xl font-bold text-fuchsia-700 mb-1">{loading ? '---' : (wishlistStats.total_items ?? 0)}</div>
                     <div className="text-sm font-medium text-gray-700">Total Items</div>
                   </div>
                 </div>
                 <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-gray-200 hover:shadow-md transition-all duration-200">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-purple-700 mb-1">{loading ? '---' : (wishlistStats.averageItemsPerUser ?? 0).toFixed(1)}</div>
+                    <div className="text-3xl font-bold text-purple-700 mb-1">{loading ? '---' : (wishlistStats.avg_items_per_user ?? 0).toFixed(1)}</div>
                     <div className="text-sm font-medium text-gray-700">Avg Items/User</div>
                   </div>
                 </div>
@@ -370,9 +376,9 @@ export default function AdminAnalytics() {
                   </h3>
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart
-                      data={(wishlistStats.mostWishlistedProducts ?? []).slice(0, 5).map(product => ({
+                      data={mostWishlistedProducts.slice(0, 5).map(product => ({
                         name: product.product_name.length > 20 ? product.product_name.substring(0, 20) + '...' : product.product_name,
-                        count: product.wishlist_count
+                        count: product.user_count
                       }))}
                       layout="vertical"
                     >
@@ -391,9 +397,9 @@ export default function AdminAnalytics() {
                   <ResponsiveContainer width="100%" height={300}>
                     <LineChart
                       data={[
-                        { name: 'Total Wishlists', value: wishlistStats.totalWishlists || 0 },
-                        { name: 'Total Items', value: wishlistStats.totalItems || 0 },
-                        { name: 'Avg Items/User', value: (wishlistStats.averageItemsPerUser || 0) * 10 }
+                        { name: 'Total Wishlists', value: wishlistStats.total_wishlists || 0 },
+                        { name: 'Total Items', value: wishlistStats.total_items || 0 },
+                        { name: 'Avg Items/User', value: (wishlistStats.avg_items_per_user || 0) * 10 }
                       ]}
                     >
                       <CartesianGrid strokeDasharray="3 3" />
@@ -419,8 +425,8 @@ export default function AdminAnalytics() {
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
                       <div className="text-sm text-gray-500 mt-2">Loading...</div>
                     </div>
-                  ) : (wishlistStats.mostWishlistedProducts?.length ?? 0) > 0 ? (
-                    (wishlistStats.mostWishlistedProducts ?? []).slice(0, 5).map((product, index) => (
+                  ) : mostWishlistedProducts.length > 0 ? (
+                    mostWishlistedProducts.slice(0, 5).map((product, index) => (
                       <div key={product.product_id} className="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm border border-purple-200 hover:shadow-md transition-all duration-200">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center">
@@ -429,7 +435,7 @@ export default function AdminAnalytics() {
                           <span className="text-sm font-medium text-gray-900 truncate">{product.product_name}</span>
                         </div>
                         <div className="bg-purple-100 px-3 py-1 rounded-full">
-                          <span className="text-sm font-bold text-purple-700">{product.wishlist_count}</span>
+                          <span className="text-sm font-bold text-purple-700">{product.user_count}</span>
                         </div>
                       </div>
                     ))
@@ -487,11 +493,11 @@ export default function AdminAnalytics() {
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600">Conversion Rate:</span>
-                      <span className="text-sm font-semibold text-emerald-600">{(cartStats.conversionRate ?? 0).toFixed(1)}%</span>
+                      <span className="text-sm font-semibold text-emerald-600">{(cartStats.conversion_rate ?? 0).toFixed(1)}%</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Abandoned Carts:</span>
-                      <span className="text-sm font-semibold text-orange-600">{(cartStats.abandonedCarts ?? 0)}</span>
+                      <span className="text-sm text-gray-600">Total Items:</span>
+                      <span className="text-sm font-semibold text-orange-600">{(cartStats.total_items ?? 0)}</span>
                     </div>
                   </div>
                 </div>
@@ -505,11 +511,11 @@ export default function AdminAnalytics() {
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600">Total Wishlists:</span>
-                      <span className="text-sm font-semibold text-purple-600">{(wishlistStats.totalWishlists ?? 0)}</span>
+                      <span className="text-sm font-semibold text-purple-600">{(wishlistStats.total_wishlists ?? 0)}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600">Avg Items/User:</span>
-                      <span className="text-sm font-semibold text-indigo-600">{(wishlistStats.averageItemsPerUser ?? 0).toFixed(1)}</span>
+                      <span className="text-sm font-semibold text-indigo-600">{(wishlistStats.avg_items_per_user ?? 0).toFixed(1)}</span>
                     </div>
                   </div>
                 </div>
@@ -521,3 +527,5 @@ export default function AdminAnalytics() {
     </>
   );
 }
+
+export default withAdminAuth(AdminAnalytics);

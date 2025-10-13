@@ -6,6 +6,7 @@ from starlette.responses import Response
 import redis.asyncio as redis
 
 from app.core.config import settings
+from app.core.redis import redis_client as global_redis_client
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
@@ -23,11 +24,15 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         client_ip = self._get_client_ip(request)
         current_time = time.time()
 
-        if await self._is_rate_limited(client_ip, current_time):
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail="Rate limit exceeded. Please try again later."
-            )
+        try:
+            if await self._is_rate_limited(client_ip, current_time):
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail="Rate limit exceeded. Please try again later."
+                )
+        except Exception as e:
+            # Log the error but don't block the request
+            print(f"Rate limiting error: {e}, allowing request to proceed")
 
         response = await call_next(request)
         return response
@@ -41,18 +46,19 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     async def _is_rate_limited(self, client_ip: str, current_time: float) -> bool:
         """Check if client is rate limited"""
-        if self.redis_client:
-            return await self._redis_rate_limit(client_ip, current_time)
-        else:
-            return self._memory_rate_limit(client_ip, current_time)
+        # For now, use memory-based rate limiting to avoid Redis connection issues
+        # This can be enhanced later when Redis integration is more stable
+        return self._memory_rate_limit(client_ip, current_time)
 
-    async def _redis_rate_limit(self, client_ip: str, current_time: float) -> bool:
+    async def _redis_rate_limit(self, client_ip: str, current_time: float, redis_client: redis.Redis) -> bool:
         """Redis-based rate limiting"""
         key = f"rate_limit:{client_ip}"
-        window_start = int(current_time // self.window_size) * self.window_size
         
         try:
-            pipe = self.redis_client.pipeline()
+            # Check if Redis client is connected
+            await redis_client.ping()
+            
+            pipe = redis_client.pipeline()
             pipe.zremrangebyscore(key, 0, current_time - self.window_size)
             pipe.zcard(key)
             pipe.zadd(key, {str(current_time): current_time})
@@ -61,26 +67,36 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             
             request_count = results[1]
             return request_count >= self.rate_limit
-        except Exception:
+        except Exception as e:
+            # Log the error and fall back to memory-based rate limiting
+            print(f"Redis rate limiting failed: {e}, falling back to memory")
             return self._memory_rate_limit(client_ip, current_time)
 
     def _memory_rate_limit(self, client_ip: str, current_time: float) -> bool:
         """Memory-based rate limiting (fallback)"""
-        if client_ip not in self.memory_store:
-            self.memory_store[client_ip] = {}
+        try:
+            if client_ip not in self.memory_store:
+                self.memory_store[client_ip] = {}
 
-        client_requests = self.memory_store[client_ip]
-        
-        cutoff_time = current_time - self.window_size
-        client_requests = {
-            timestamp: req_time 
-            for timestamp, req_time in client_requests.items() 
-            if req_time > cutoff_time
-        }
-        self.memory_store[client_ip] = client_requests
+            client_requests = self.memory_store[client_ip]
+            
+            # Clean up old requests
+            cutoff_time = current_time - self.window_size
+            client_requests = {
+                timestamp: req_time 
+                for timestamp, req_time in client_requests.items() 
+                if req_time > cutoff_time
+            }
+            self.memory_store[client_ip] = client_requests
 
-        if len(client_requests) >= self.rate_limit:
-            return True
+            # Check if rate limit exceeded
+            if len(client_requests) >= self.rate_limit:
+                return True
 
-        client_requests[str(current_time)] = current_time
-        return False
+            # Add current request
+            client_requests[str(current_time)] = current_time
+            return False
+        except Exception as e:
+            print(f"Memory rate limiting error: {e}")
+            # If there's an error, allow the request (fail open)
+            return False

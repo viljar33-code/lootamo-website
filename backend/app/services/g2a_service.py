@@ -5,6 +5,8 @@ import httpx
 from typing import Dict, Any, Optional
 from app.core.config import settings
 from app.schemas.order import G2AOrderRequest, G2AOrderResponse
+from app.services.error_log_service import ErrorLogService
+from app.core.database import SessionLocal
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +76,24 @@ async def fetch_products(page: int = 1, max_retries: int = 3, base_delay: float 
         except (httpx.HTTPError, ValueError) as e:
             if attempt == max_retries:
                 logger.error(f"Failed to fetch products page {page} after {max_retries + 1} attempts: {e}")
+                # Log critical error for product fetch failure
+                db = SessionLocal()
+                try:
+                    ErrorLogService.log_exception(
+                        db=db,
+                        exception=e,
+                        error_type="G2A_PRODUCT_FETCH_FAILURE",
+                        source_system="g2a",
+                        source_function="fetch_products",
+                        error_context={
+                            "page": page,
+                            "max_retries": max_retries,
+                            "total_attempts": max_retries + 1
+                        },
+                        severity="critical"
+                    )
+                finally:
+                    db.close()
                 raise
             
             delay = base_delay * (2 ** attempt) + (0.1 * attempt)  
@@ -82,6 +102,20 @@ async def fetch_products(page: int = 1, max_retries: int = 3, base_delay: float 
         
         except Exception as e:
             logger.error(f"Unexpected error fetching products page {page}: {e}")
+            # Log unexpected error
+            db = SessionLocal()
+            try:
+                ErrorLogService.log_exception(
+                    db=db,
+                    exception=e,
+                    error_type="G2A_UNEXPECTED_ERROR",
+                    source_system="g2a",
+                    source_function="fetch_products",
+                    error_context={"page": page},
+                    severity="critical"
+                )
+            finally:
+                db.close()
             raise
 
 async def fetch_all_products():
@@ -181,9 +215,43 @@ async def create_g2a_order(product_id: str, max_price: float = None) -> Optional
                 
     except httpx.HTTPError as e:
         logger.error(f"HTTP error creating G2A order: {e}")
+        # Log G2A order creation failure
+        db = SessionLocal()
+        try:
+            ErrorLogService.log_exception(
+                db=db,
+                exception=e,
+                error_type="G2A_ORDER_CREATION_FAILURE",
+                source_system="g2a",
+                source_function="create_g2a_order",
+                error_context={
+                    "product_id": product_id,
+                    "max_price": max_price
+                },
+                severity="error"
+            )
+        finally:
+            db.close()
         raise
     except Exception as e:
         logger.error(f"Unexpected error creating G2A order: {e}")
+        # Log unexpected error
+        db = SessionLocal()
+        try:
+            ErrorLogService.log_exception(
+                db=db,
+                exception=e,
+                error_type="G2A_ORDER_CREATION_ERROR",
+                source_system="g2a",
+                source_function="create_g2a_order",
+                error_context={
+                    "product_id": product_id,
+                    "max_price": max_price
+                },
+                severity="critical"
+            )
+        finally:
+            db.close()
         raise
     
     return None
@@ -237,9 +305,37 @@ async def pay_g2a_order(g2a_order_id: str) -> Optional[Dict[str, Any]]:
                 
     except httpx.HTTPError as e:
         logger.error(f"HTTP error paying G2A order: {e}")
+        # Log G2A payment failure
+        db = SessionLocal()
+        try:
+            ErrorLogService.log_exception(
+                db=db,
+                exception=e,
+                error_type="G2A_PAYMENT_FAILURE",
+                source_system="g2a",
+                source_function="pay_g2a_order",
+                error_context={"g2a_order_id": g2a_order_id},
+                severity="error"
+            )
+        finally:
+            db.close()
         raise
     except Exception as e:
         logger.error(f"Unexpected error paying G2A order: {e}")
+        # Log unexpected error
+        db = SessionLocal()
+        try:
+            ErrorLogService.log_exception(
+                db=db,
+                exception=e,
+                error_type="G2A_PAYMENT_ERROR",
+                source_system="g2a",
+                source_function="pay_g2a_order",
+                error_context={"g2a_order_id": g2a_order_id},
+                severity="critical"
+            )
+        finally:
+            db.close()
         raise
     
     return None
@@ -280,22 +376,18 @@ async def get_g2a_order_key(g2a_order_id: str) -> Optional[Dict[str, Any]]:
             
             if response.status_code == 200:
                 try:
-                    data = response.json()
-                    logger.info(f"G2A license key retrieved successfully: {data}")
+                    key_data = response.json()
+                    logger.info(f"G2A key response: {key_data}")
                     
-                    if "key" in data and "keys" not in data:
-                        normalized_data = {
-                            "keys": [
-                                {
-                                    "key": data["key"],
-                                    "isFile": data.get("isFile", False)
-                                }
-                            ]
-                        }
-                        logger.info(f"Normalized G2A response: {normalized_data}")
-                        return normalized_data
-                    
-                    return data
+                    # Handle both response formats
+                    if "keys" in key_data and key_data["keys"]:
+                        return key_data
+                    elif "key" in key_data:
+                        return key_data
+                    else:
+                        logger.warning(f"No keys found in G2A response: {key_data}")
+                        return None
+                        
                 except Exception as e:
                     logger.error(f"Failed to parse G2A key response JSON: {e}")
                     logger.error(f"Raw response: {response.text}")
@@ -336,12 +428,42 @@ async def get_g2a_order_key(g2a_order_id: str) -> Optional[Dict[str, Any]]:
                 
     except httpx.HTTPError as e:
         logger.error(f"HTTP error retrieving G2A key: {e}")
-        raise
+        # Log G2A key retrieval failure
+        db = SessionLocal()
+        try:
+            ErrorLogService.log_exception(
+                db=db,
+                exception=e,
+                error_type="G2A_KEY_RETRIEVAL_FAILURE",
+                source_system="g2a",
+                source_function="get_g2a_order_key",
+                error_context={"g2a_order_id": g2a_order_id},
+                severity="error"
+            )
+        finally:
+            db.close()
+        return {"error": "API_UNAVAILABLE", "message": "G2A API is currently unavailable"}
     except Exception as e:
         logger.error(f"Unexpected error retrieving G2A key: {e}")
-        raise
+        # Log unexpected error
+        db = SessionLocal()
+        try:
+            ErrorLogService.log_exception(
+                db=db,
+                exception=e,
+                error_type="G2A_KEY_RETRIEVAL_ERROR",
+                source_system="g2a",
+                source_function="get_g2a_order_key",
+                error_context={"g2a_order_id": g2a_order_id},
+                severity="critical"
+            )
+        finally:
+            db.close()
+        return {"error": "API_ERROR", "message": "Failed to retrieve license key from G2A"}
     
-    return None
+    # If we reach here, G2A API returned an unhandled response
+    logger.warning(f"G2A API returned unhandled response for order {g2a_order_id}")
+    return {"error": "UNKNOWN_RESPONSE", "message": "G2A API returned unexpected response"}
 
 
 async def get_g2a_order_details(g2a_order_id: str) -> Optional[Dict[str, Any]]:

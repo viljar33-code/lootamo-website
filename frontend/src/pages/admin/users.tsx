@@ -1,32 +1,24 @@
 import Head from "next/head";
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/router";
+import { FiUsers, FiPlus, FiEdit, FiTrash2, FiSearch, FiFilter, FiDownload, FiRefreshCw, FiEye, FiUserCheck, FiUserX, FiShield, FiMail, FiPhone, FiCalendar, FiUserPlus, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import AdminLayout from "@/components/layouts/AdminLayout";
-import ConfirmationModal from '@/components/ConfirmationModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { AdminService, AdminUser } from '@/services/adminService';
-import { 
-  FiUsers, 
-  FiUserPlus, 
-  FiTrash2, 
-  FiMail, 
-  FiShield, 
-  FiEye, 
-  FiSearch,
-  FiRefreshCw,
-  FiChevronLeft,
-  FiChevronRight
-} from "react-icons/fi";
+import withAdminAuth from '@/hocs/withAdminAuth';
+import ConfirmationModal from "@/components/ConfirmationModal";
 
 interface UserStats {
   totalUsers: number;
   activeUsers: number;
-  adminUsers: number;
   verifiedUsers: number;
+  adminUsers: number;
   newUsersThisWeek: number;
 }
 
-export default function AdminUsers() {
+function AdminUsers() {
   const { api } = useAuth();
+  const router = useRouter();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [stats, setStats] = useState<UserStats>({
     totalUsers: 0,
@@ -225,6 +217,10 @@ export default function AdminUsers() {
     if (!isActive) return 'Inactive';
     if (!isVerified) return 'Unverified';
     return 'Active';
+  };
+
+  const handleViewUser = (userId: number) => {
+    router.push(`/admin/users/${userId}`);
   };
 
   return (
@@ -433,6 +429,7 @@ export default function AdminUsers() {
                         <td className="py-4 px-4">
                           <div className="flex items-center gap-2">
                             <button
+                              onClick={() => handleViewUser(user.id)}
                               className="p-1 text-blue-600 hover:bg-blue-50 rounded"
                               title="View User"
                             >
@@ -533,3 +530,5 @@ export default function AdminUsers() {
     </>
   );
 }
+
+export default withAdminAuth(AdminUsers);

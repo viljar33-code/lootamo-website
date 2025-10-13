@@ -1,20 +1,10 @@
 import Head from "next/head";
 import React, { useState, useEffect } from 'react';
+import { FiDollarSign, FiRefreshCw, FiClock, FiChevronLeft, FiChevronRight, FiX, FiCheck } from "react-icons/fi";
 import AdminLayout from '@/components/layouts/AdminLayout';
-import ConfirmationModal from '@/components/ConfirmationModal';
 import { useAuth } from '@/contexts/AuthContext';
-import { 
-  FiCheck, 
-  FiX, 
-  FiClock, 
-  FiRefreshCw, 
-  FiEye, 
-  FiExternalLink,
-  FiDollarSign,
-  FiTrash2,
-  FiChevronLeft,
-  FiChevronRight
-} from "react-icons/fi";
+import ConfirmationModal from "@/components/ConfirmationModal";
+import withAdminAuth from "@/hocs/withAdminAuth";
 
 interface PaymentRecord {
   id: string;
@@ -55,7 +45,7 @@ interface OrderData {
   order_date?: string;
 }
 
-export default function AdminPayments() {
+function AdminPayments() {
   const { api } = useAuth();
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [stats, setStats] = useState<PaymentStats>({
@@ -363,7 +353,6 @@ export default function AdminPayments() {
                     <th className="text-left py-4 px-6 font-semibold text-gray-900">Status</th>
                     <th className="text-left py-4 px-6 font-semibold text-gray-900">License</th>
                     <th className="text-left py-4 px-6 font-semibold text-gray-900">Date</th>
-                    <th className="text-left py-4 px-6 font-semibold text-gray-900">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white">
@@ -429,31 +418,6 @@ export default function AdminPayments() {
                           </div>
                           <div className="text-xs text-gray-500">
                             {new Date(payment.createdAt).toLocaleTimeString()}
-                          </div>
-                        </td>
-                        <td className="py-4 px-6">
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => window.open(`/admin/orders/${payment.orderId}`, '_blank')}
-                              className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors duration-200"
-                              title="View Order"
-                            >
-                              <FiEye className="text-sm" />
-                            </button>
-                            {/* <button
-                              onClick={() => window.open(`https://dashboard.stripe.com/payments/${payment.stripePaymentIntentId}`, '_blank')}
-                              className="p-2 text-purple-600 hover:bg-purple-100 rounded-lg transition-colors duration-200"
-                              title="View in Stripe"
-                            >
-                              <FiExternalLink className="text-sm" />
-                            </button> */}
-                            <button
-                              onClick={() => handleDeleteClick(payment)}
-                              className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors duration-200"
-                              title="Delete Payment"
-                            >
-                              <FiTrash2 className="text-sm" />
-                            </button>
                           </div>
                         </td>
                       </tr>
@@ -531,3 +495,5 @@ export default function AdminPayments() {
     </>
   );
 }
+
+export default withAdminAuth(AdminPayments);

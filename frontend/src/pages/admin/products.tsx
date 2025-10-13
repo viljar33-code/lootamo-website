@@ -412,7 +412,7 @@ export default function AdminProducts() {
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex items-center justify-end gap-2">
                             <button
-                              onClick={() => window.open(`/products/${product.id}`, '_blank')}
+                              onClick={() => window.open(`/admin/products/${product.id}`, '_blank')}
                               className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors duration-200"
                               title="View Product"
                             >

@@ -162,6 +162,41 @@ def get_wishlist_stats(db: Session) -> List[dict]:
         return []
 
 
+def get_wishlist_analytics(db: Session) -> dict:
+    """
+    Get overall wishlist analytics for admin dashboard.
+    
+    Args:
+        db: Database session
+        
+    Returns:
+        dict: Analytics with total wishlists, total items, and average items per user
+    """
+    try:
+        # Total number of users who have wishlists
+        total_wishlists = db.query(func.count(func.distinct(Wishlist.user_id))).scalar() or 0
+        
+        # Total number of wishlist items across all users
+        total_items = db.query(func.count(Wishlist.id)).scalar() or 0
+        
+        # Average items per user (avoid division by zero)
+        avg_items_per_user = round(total_items / total_wishlists, 1) if total_wishlists > 0 else 0.0
+        
+        return {
+            "total_wishlists": total_wishlists,
+            "total_items": total_items,
+            "avg_items_per_user": avg_items_per_user
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting wishlist analytics: {e}")
+        return {
+            "total_wishlists": 0,
+            "total_items": 0,
+            "avg_items_per_user": 0.0
+        }
+
+
 def check_product_in_wishlist(db: Session, user_id: int, product_id: str) -> bool:
     """
     Check if a product is in user's wishlist.

@@ -3,25 +3,129 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminHeader from "@/components/admin/AdminHeader";
+import { useAuth } from '@/contexts/AuthContext';
+import { AdminService, RetryLog, RetryStats, ErrorLog, ErrorStats } from '@/services/adminService';
 import { 
   FiDatabase, 
   FiAlertTriangle, 
   FiCheckCircle, 
   FiServer,
   FiShield,
-  FiRefreshCw,
   FiEye,
-  FiDownload,
-  FiFilter
 } from "react-icons/fi";
 
 export default function AdminLogs() {
   const router = useRouter();
+  const { api } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [retryLogs, setRetryLogs] = useState<RetryLog[]>([]);
+  const [retryStats, setRetryStats] = useState<RetryStats | null>(null);
+  const [errorLogs, setErrorLogs] = useState<ErrorLog[]>([]);
+  const [errorStats, setErrorStats] = useState<ErrorStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showAllRetryLogs, setShowAllRetryLogs] = useState(false);
+  const [showAllErrorLogs, setShowAllErrorLogs] = useState(false);
+  const [deletingRetryLog, setDeletingRetryLog] = useState<number | null>(null);
+  const [deletingErrorLog, setDeletingErrorLog] = useState<number | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<{type: 'retry' | 'error', id: number} | null>(null);
 
   useEffect(() => {
-  }, [router]);
+    const fetchData = async () => {
+      if (!api) return;
+      
+      try {
+        setLoading(true);
+        const adminService = new AdminService(api);
+        
+        const [logsResponse, errorLogsResponse] = await Promise.all([
+          adminService.getRetryLogs(0, 50),
+          adminService.getErrorLogs(1, 10)
+        ]);
+        
+        // Calculate stats from the fetched logs to avoid duplicate API call
+        const statsResponse = adminService.calculateRetryStatsFromLogs(logsResponse.retry_logs);
+        const errorStatsResponse = await adminService.getErrorStats();
+        
+        setRetryLogs(logsResponse.retry_logs);
+        setRetryStats(statsResponse);
+        setErrorLogs(errorLogsResponse.error_logs);
+        setErrorStats(errorStatsResponse);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch retry logs:', err);
+        setError('Failed to load retry logs data');
+      } finally {
+        setLoading(false);
+      }
+    };
 
+    fetchData();
+  }, [api, router]);
+
+  const confirmDelete = (type: 'retry' | 'error', id: number) => {
+    setShowDeleteConfirm({ type, id });
+  };
+
+  const handleDeleteRetryLog = async (retryLogId: number) => {
+    if (!api) return;
+    
+    try {
+      setDeletingRetryLog(retryLogId);
+      const adminService = new AdminService(api);
+      await adminService.deleteRetryLog(retryLogId);
+      
+      // Remove the deleted log from the state
+      setRetryLogs(prev => prev.filter(log => log.id !== retryLogId));
+      
+      // Refresh stats to reflect the deletion
+      const updatedLogs = retryLogs.filter(log => log.id !== retryLogId);
+      const statsResponse = adminService.calculateRetryStatsFromLogs(updatedLogs);
+      setRetryStats(statsResponse);
+      
+    } catch (error) {
+      console.error('Failed to delete retry log:', error);
+      setError('Failed to delete retry log');
+    } finally {
+      setDeletingRetryLog(null);
+      setShowDeleteConfirm(null);
+    }
+  };
+
+  const handleDeleteErrorLog = async (errorLogId: number) => {
+    if (!api) return;
+    
+    try {
+      setDeletingErrorLog(errorLogId);
+      const adminService = new AdminService(api);
+      await adminService.deleteErrorLog(errorLogId);
+      
+      // Remove the deleted log from the state
+      setErrorLogs(prev => prev.filter(log => log.id !== errorLogId));
+      
+      // Refresh stats to reflect the deletion
+      const statsResponse = await adminService.getErrorStats();
+      setErrorStats(statsResponse);
+      
+    } catch (error) {
+      console.error('Failed to delete error log:', error);
+      setError('Failed to delete error log');
+    } finally {
+      setDeletingErrorLog(null);
+      setShowDeleteConfirm(null);
+    }
+  };
+
+  const executeDelete = () => {
+    if (!showDeleteConfirm) return;
+    
+    if (showDeleteConfirm.type === 'retry') {
+      handleDeleteRetryLog(showDeleteConfirm.id);
+    } else {
+      handleDeleteErrorLog(showDeleteConfirm.id);
+    }
+  };
+    
   const batches = [
     { id: "BATCH-1735467870-002", rows: 5200, results: { inserted: 4980, updated: 200, skipped: 15, validated: 5 }, errorRate: 0.3, status: "Completed", ts: "2025-09-02 09:03:00" },
     { id: "BATCH-1735467870-003", rows: 3500, results: { inserted: 3300, updated: 150, skipped: 50, validated: 0 }, errorRate: 1.4, status: "Completed", ts: "2025-09-02 09:05:10" },
@@ -38,7 +142,7 @@ export default function AdminLogs() {
 
       <div className="min-h-screen bg-gray-100 flex">
         <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col md:ml-72">
           <AdminHeader onMenuClick={() => setSidebarOpen(true)} />
 
           <main className="px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -53,65 +157,76 @@ export default function AdminLogs() {
             {/* System Overview Cards */}
             <section className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
               <div className="mb-8">
-                <h2 className="text-2xl font-bold text-gray-900">System Monitoring & Error Handling</h2>
+                <h2 className="text-2xl font-bold text-gray-900">Retry Logic & Monitoring</h2>
                 <p className="text-gray-600 mt-1">
-                  Comprehensive logging of all game/software catalog imports, license key deliveries, and system health
+                  Real-time monitoring of retry operations, email deliveries, and system recovery processes
                 </p>
               </div>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {/* Import Batches - Blue Theme */}
-                <div className="bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl p-6 border border-blue-200 hover:from-blue-200 hover:to-blue-300 transition-all duration-300 group">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-gray-700 text-sm font-medium">Import Batches</p>
-                      <p className="text-3xl font-bold mt-2 text-gray-900">{batches.length}</p>
+              {loading ? (
+                <div className="flex justify-center items-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <span className="ml-3 text-gray-600">Loading retry statistics...</span>
+                </div>
+              ) : error ? (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <p className="text-red-600">{error}</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {/* Total Retries - Blue Theme */}
+                  <div className="bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl p-6 border border-blue-200 hover:from-blue-200 hover:to-blue-300 transition-all duration-300 group">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-gray-700 text-sm font-medium">Total Retries</p>
+                        <p className="text-3xl font-bold mt-2 text-gray-900">{retryStats?.totalRetries || 0}</p>
+                      </div>
+                      <div className="p-3 bg-blue-500 rounded-lg">
+                        <FiDatabase className="text-2xl text-white" />
+                      </div>
                     </div>
-                    <div className="p-3 bg-blue-500 rounded-lg">
-                      <FiDatabase className="text-2xl text-white" />
+                  </div>
+                  
+                  {/* Failed Retries - Orange Theme */}
+                  <div className="bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl p-6 border border-orange-200 hover:from-orange-200 hover:to-orange-300 transition-all duration-300 group">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-gray-700 text-sm font-medium">Failed Retries</p>
+                        <p className="text-3xl font-bold mt-2 text-gray-900">{retryStats?.failedRetries || 0}</p>
+                      </div>
+                      <div className="p-3 bg-orange-500 rounded-lg">
+                        <FiShield className="text-2xl text-white" />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Successful Retries - Green Theme */}
+                  <div className="bg-gradient-to-br from-green-100 to-green-200 rounded-xl p-6 border border-green-200 hover:from-green-200 hover:to-green-300 transition-all duration-300 group">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-gray-700 text-sm font-medium">Successful Retries</p>
+                        <p className="text-3xl font-bold mt-2 text-gray-900">{retryStats?.successfulRetries || 0}</p>
+                      </div>
+                      <div className="p-3 bg-green-500 rounded-lg">
+                        <FiCheckCircle className="text-2xl text-white" />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Pending Retries - Purple Theme */}
+                  <div className="bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl p-6 border border-purple-200 hover:from-purple-200 hover:to-purple-300 transition-all duration-300 group">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-gray-700 text-sm font-medium">Pending Retries</p>
+                        <p className="text-3xl font-bold mt-2 text-gray-900">{retryStats?.pendingRetries || 0}</p>
+                      </div>
+                      <div className="p-3 bg-purple-500 rounded-lg">
+                        <FiServer className="text-2xl text-white" />
+                      </div>
                     </div>
                   </div>
                 </div>
-                
-                {/* Quarantined Records - Orange Theme */}
-                <div className="bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl p-6 border border-orange-200 hover:from-orange-200 hover:to-orange-300 transition-all duration-300 group">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-gray-700 text-sm font-medium">Quarantined Records</p>
-                      <p className="text-3xl font-bold mt-2 text-gray-900">12</p>
-                    </div>
-                    <div className="p-3 bg-orange-500 rounded-lg">
-                      <FiShield className="text-2xl text-white" />
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Successful Deliveries - Green Theme */}
-                <div className="bg-gradient-to-br from-green-100 to-green-200 rounded-xl p-6 border border-green-200 hover:from-green-200 hover:to-green-300 transition-all duration-300 group">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-gray-700 text-sm font-medium">Successful Deliveries</p>
-                      <p className="text-3xl font-bold mt-2 text-gray-900">670</p>
-                    </div>
-                    <div className="p-3 bg-green-500 rounded-lg">
-                      <FiCheckCircle className="text-2xl text-white" />
-                    </div>
-                  </div>
-                </div>
-                
-                {/* System Uptime - Purple Theme */}
-                <div className="bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl p-6 border border-purple-200 hover:from-purple-200 hover:to-purple-300 transition-all duration-300 group">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-gray-700 text-sm font-medium">System Uptime</p>
-                      <p className="text-3xl font-bold mt-2 text-gray-900">99.7%</p>
-                    </div>
-                    <div className="p-3 bg-purple-500 rounded-lg">
-                      <FiServer className="text-2xl text-white" />
-                    </div>
-                  </div>
-                </div>
-              </div>
+              )}
             </section>
 
             {/* Catalog Import Logs */}
@@ -316,29 +431,53 @@ export default function AdminLogs() {
                     </div>
                   </div>
                 </div>
-                
-                <div className="p-6">
+                {errorLogs.length > 3 && (
+                  <div className="flex justify-end px-6 py-2">
+                    <button 
+                      onClick={() => setShowAllErrorLogs(!showAllErrorLogs)}
+                      className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                    >
+                      {showAllErrorLogs ? 'Show less' : 'View all'}
+                    </button>
+                  </div>
+                )}
+                <div className={`p-6 ${errorLogs.length > 3 ? 'pt-0' : ''}`}>
                   <div className="bg-gray-900 rounded-lg p-4 mb-4 font-mono text-xs text-green-400 space-y-1 overflow-x-auto">
-                    <div className="flex items-start gap-2">
-                      <span className="text-gray-500">[2025-09-02 09:05:13]</span>
-                      <span className="text-yellow-400">VALIDATION_WARN</span>
-                      <span>- row 128: missing required field price</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="text-gray-500">[2025-09-02 09:05:14]</span>
-                      <span className="text-orange-400">QUARANTINE</span>
-                      <span>- moved row to quarantine table for manual review</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="text-gray-500">[2025-09-02 09:06:12]</span>
-                      <span className="text-red-400">DUPLICATE_SKU</span>
-                      <span>- SKU=BOXI-CODER2-2924 detected, skipping row</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="text-gray-500">[2025-09-02 09:10:21]</span>
-                      <span className="text-green-400">IMPORT_COMPLETE</span>
-                      <span>- batch processed: 5200 rows inserted, 1 failed</span>
-                    </div>
+                    {loading ? (
+                      <div className="text-center py-4">
+                        <span className="text-gray-400">Loading error logs...</span>
+                      </div>
+                    ) : errorLogs.length > 0 ? (
+                      errorLogs.slice(0, showAllErrorLogs ? errorLogs.length : 3).map((log) => (
+                        <div key={log.id} className="flex items-start justify-between gap-2">
+                          <div className="flex items-start gap-2 flex-1">
+                            <span className={`${
+                              log.severity === 'critical' ? 'text-red-400' : 
+                              log.severity === 'error' ? 'text-orange-400' : 
+                              'text-yellow-400'
+                            }`}>
+                              {log.display_message}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => confirmDelete('error', log.id)}
+                            disabled={deletingErrorLog === log.id}
+                            className={`ml-2 flex-shrink-0 transition-colors ${
+                              deletingErrorLog === log.id 
+                                ? 'text-gray-500 cursor-not-allowed' 
+                                : 'text-red-400 hover:text-red-300'
+                            }`}
+                            title="Delete error log"
+                          >
+                            {deletingErrorLog === log.id ? '...' : '×'}
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-4">
+                        <span className="text-gray-400">No error logs available</span>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="space-y-3">
@@ -378,24 +517,68 @@ export default function AdminLogs() {
                     </div>
                   </div>
                 </div>
-                
-                <div className="p-6">
+                {retryLogs.length > 3 && (
+                  <div className="flex justify-end px-6 py-2">
+                    <button 
+                      onClick={() => setShowAllRetryLogs(!showAllRetryLogs)}
+                      className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                    >
+                      {showAllRetryLogs ? 'Show less' : 'View all'}
+                    </button>
+                  </div>
+                )}
+                <div className={`p-6 ${retryLogs.length > 3 ? 'pt-0' : ''}`}>
                   <div className="bg-gray-900 rounded-lg p-4 mb-4 font-mono text-xs text-green-400 space-y-1 overflow-x-auto">
-                    <div className="flex items-start gap-2">
-                      <span className="text-gray-500">[2025-09-03 11:13:01]</span>
-                      <span className="text-yellow-400">DELIVERY_RETRY</span>
-                      <span>- order 882: network timeout, scheduling retry in 30s</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="text-gray-500">[2025-09-03 11:13:32]</span>
-                      <span className="text-blue-400">DELIVERY_RETRY</span>
-                      <span>- retry 1/3 for order 882</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="text-gray-500">[2025-09-03 11:13:55]</span>
-                      <span className="text-green-400">DELIVERY_SUCCESS</span>
-                      <span>- license key delivered to customer@company.com</span>
-                    </div>
+                    {loading ? (
+                      <div className="text-center py-4">
+                        <span className="text-gray-400">Loading retry logs...</span>
+                      </div>
+                    ) : retryLogs.length > 0 ? (
+                      retryLogs.slice(0, showAllRetryLogs ? retryLogs.length : 3).map((log) => (
+                        <div key={log.id} className="flex items-start justify-between gap-2">
+                          <div className="flex items-start gap-2 flex-1">
+                            <span className="text-gray-500">[{new Date(log.started_at + 'Z').toLocaleString('en-US', { 
+                              year: 'numeric', 
+                              month: '2-digit', 
+                              day: '2-digit', 
+                              hour: '2-digit', 
+                              minute: '2-digit', 
+                              second: '2-digit', 
+                              hour12: false,
+                              timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                            })}]</span>
+                            <span className={`${
+                              log.status === 'success' ? 'text-green-400' : 
+                              log.status === 'failed' ? 'text-red-400' : 
+                              'text-yellow-400'
+                            }`}>
+                              {log.retry_type.toUpperCase()}
+                            </span>
+                            <span>
+                              - attempt {log.attempt_number}/{log.max_attempts}: {log.status}
+                              {log.error_message && ` - ${log.error_message}`}
+                              {log.order_id && ` (order: ${log.order_id})`}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => confirmDelete('retry', log.id)}
+                            disabled={deletingRetryLog === log.id}
+                            className={`ml-2 flex-shrink-0 transition-colors ${
+                              deletingRetryLog === log.id 
+                                ? 'text-gray-500 cursor-not-allowed' 
+                                : 'text-red-400 hover:text-red-300'
+                            }`}
+                            title="Delete retry log"
+                          >
+                            {deletingRetryLog === log.id ? '...' : '×'}
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-4">
+                        <span className="text-gray-400">No retry logs available</span>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="space-y-3">
@@ -425,6 +608,34 @@ export default function AdminLogs() {
           </main>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Confirm Delete
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete this {showDeleteConfirm.type} log? This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowDeleteConfirm(null)}
+                className="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={executeDelete}
+                className="px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

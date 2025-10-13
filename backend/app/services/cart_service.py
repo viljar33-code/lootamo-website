@@ -313,6 +313,55 @@ def get_cart_stats(db: Session) -> List[dict]:
         return []
 
 
+def get_cart_analytics(db: Session) -> dict:
+    """
+    Get overall cart analytics for admin dashboard.
+    
+    Args:
+        db: Database session
+        
+    Returns:
+        dict: Analytics with active carts value, avg cart value, total items, and conversion rate
+    """
+    try:
+        # Total value of all active carts (sum of all cart items * product min_price)
+        active_carts_value = db.query(
+            func.coalesce(func.sum(Cart.quantity * Product.min_price), 0)
+        ).join(Product).filter(
+            Product.is_active == True,
+            Product.min_price.isnot(None)
+        ).scalar() or 0.0
+        
+        # Number of users with active carts
+        active_carts_count = db.query(func.count(func.distinct(Cart.user_id))).scalar() or 0
+        
+        # Average cart value (avoid division by zero)
+        avg_cart_value = round(active_carts_value / active_carts_count, 2) if active_carts_count > 0 else 0.0
+        
+        # Total number of items in all carts
+        total_items = db.query(func.coalesce(func.sum(Cart.quantity), 0)).scalar() or 0
+        
+        # For conversion rate, we'll need to calculate based on orders vs carts
+        # For now, setting as 0.0% since we'd need order data to calculate properly
+        conversion_rate = 0.0
+        
+        return {
+            "active_carts_value": float(active_carts_value),
+            "avg_cart_value": avg_cart_value,
+            "total_items": total_items,
+            "conversion_rate": conversion_rate
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting cart analytics: {e}")
+        return {
+            "active_carts_value": 0.0,
+            "avg_cart_value": 0.0,
+            "total_items": 0,
+            "conversion_rate": 0.0
+        }
+
+
 def get_cart_item_count(db: Session, user_id: int) -> int:
     """
     Get total number of items in user's cart.

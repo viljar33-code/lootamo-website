@@ -11,6 +11,7 @@ from app.schemas.payment import PaymentIntentRequest, PaymentIntentResponse
 from app.schemas.order_item import LicenseKeyResponse, OrderItemWithKey
 from app.services.g2a_service import pay_g2a_order, get_g2a_order_key, create_g2a_order, get_g2a_order_details, confirm_g2a_order_payment
 from app.services.order_service import OrderService
+from app.services.error_log_service import ErrorLogService
 from app.models.order import PaymentStatus
 from app.core.stripe_config import STRIPE_WEBHOOK_SECRET
 
@@ -81,10 +82,25 @@ class PaymentService:
                 logger.error(f"Stripe PaymentIntent creation failed: {stripe_error}")
                 logger.error(f"Error type: {type(stripe_error)}")
                 logger.error(f"Stripe API key configured: {bool(stripe.api_key)}")
-                logger.error(f"Stripe API key value: {stripe.api_key[:10] if stripe.api_key else 'None'}...")
-                import traceback
-                logger.error(f"Full error traceback: {traceback.format_exc()}")
-                raise
+                
+                # Log error for payment processing failure
+                ErrorLogService.log_exception(
+                    db=db,
+                    exception=stripe_error,
+                    error_type="PAYMENT_INTENT_CREATION_FAILED",
+                    source_system="payment",
+                    source_function="PaymentService.create_payment_intent",
+                    error_context={
+                        "order_id": order.id,
+                        "user_id": user_id,
+                        "amount": order.total_amount,
+                        "currency": order.currency,
+                        "stripe_api_configured": bool(stripe.api_key)
+                    },
+                    severity="critical"
+                )
+                
+                raise ValueError(f"Payment processing error: {stripe_error}")
             
             order.stripe_payment_intent_id = payment_intent.id
             logger.info(f"Updating order {order.id} with PaymentIntent ID: {payment_intent.id}")
@@ -181,24 +197,10 @@ class PaymentService:
                     await PaymentService._process_multi_item_g2a_flow(db, order)
                 else:
                     await PaymentService._process_g2a_payment_flow(db, order)
-            
-                logger.info(f"Calling license keys retrieval for order {order.id} to ensure all keys are stored")
-                try:
-                    await PaymentService.get_multi_item_license_keys(db, order.id, order.user_id)
-                    logger.info(f"License keys retrieval completed for order {order.id}")
-                except Exception as e:
-                    logger.error(f"Error in license keys retrieval for order {order.id}: {e}")
-            
-                logger.info(f"Checking if all items are complete for order {order.id}")
-                try:
-                    await PaymentService._update_order_status_if_all_items_complete(db, order)
-                    logger.info(f"Order status check completed for order {order.id}")
-                except Exception as e:
-                    logger.error(f"Error updating order status for order {order.id}: {e}")
             else:
                 logger.info(f"Skipping G2A processing for already processed order {order.id}")
         
-
+            # Always send emails for completed orders regardless of G2A processing status
             logger.info(f"Sending license keys via email for order {order.id}")
             
             from app.models import EmailQueue
@@ -331,10 +333,12 @@ class PaymentService:
                     if g2a_create_response and "order_id" in g2a_create_response:
                         order_item.g2a_order_id = g2a_create_response["order_id"]
                         order_item.status = "processing"
+                        db.commit()  # Commit G2A order ID immediately
                         logger.info(f"G2A order created for item {order_item.id}: {order_item.g2a_order_id}")
                     else:
                         logger.warning(f"Failed to create G2A order for item {order_item.id}")
                         order_item.status = "failed"
+                        db.commit()
                         continue
                 
                 if order_item.g2a_order_id and not order_item.g2a_transaction_id:
@@ -343,49 +347,90 @@ class PaymentService:
                     
                     if g2a_pay_response and "transaction_id" in g2a_pay_response:
                         order_item.g2a_transaction_id = g2a_pay_response["transaction_id"]
+                        db.commit()  # Commit transaction ID immediately
                         logger.info(f"G2A payment successful for item {order_item.id}: {order_item.g2a_transaction_id}")
-                        
-                        logger.info(f"Retrieving license key for item {order_item.id} (G2A order: {order_item.g2a_order_id})")
-                        key_response = await get_g2a_order_key(order_item.g2a_order_id)
-                        
-                        license_key = None
-                        if key_response and "keys" in key_response and key_response["keys"]:
+                
+                # Always try to retrieve license key if we don't have one yet (regardless of payment status)
+                if order_item.g2a_order_id and not order_item.delivered_key and order_item.status != "complete":
+                    logger.info(f"Retrieving license key for item {order_item.id} (G2A order: {order_item.g2a_order_id})")
+                    
+                    # Add delay for G2A payment processing
+                    import asyncio
+                    await asyncio.sleep(5)  # Wait 5 seconds for G2A to process payment
+                    
+                    key_response = await get_g2a_order_key(order_item.g2a_order_id)
+                    
+                    license_key = None
+                    if key_response and isinstance(key_response, dict):
+                        if "keys" in key_response and key_response["keys"]:
                             license_key = key_response["keys"][0]["key"]
-                        elif key_response and "key" in key_response and "keys" not in key_response:
+                        elif "key" in key_response and key_response["key"]:
                             license_key = key_response["key"]
+                    
+                    if license_key:
+                        order_item.delivered_key = license_key
+                        order_item.status = "complete"
+                        db.commit()  # Commit immediately after updating
+                        logger.info(f"License key retrieved and stored for item {order_item.id}: {license_key}")
                         
-                        if license_key:
-                            order_item.delivered_key = license_key
-                            order_item.status = "complete"
-                            logger.info(f"License key retrieved and stored for item {order_item.id}: {license_key}")
-                            
-                            await PaymentService._update_order_status_if_all_items_complete(db, order)
-                        elif key_response and "error" in key_response:
-                            error_code = key_response["error"]
-                            if error_code == "ORD03":
-                                logger.warning(f"License key not ready (ORD03) for item {order_item.id} - will retry later")
-                                order_item.status = "pending_key"
-                            elif error_code == "ORD01":
-                                logger.error(f"Invalid G2A order ID (ORD01) for item {order_item.id} - G2A order: {order_item.g2a_order_id}")
-                                order_item.status = "failed"
-                            elif error_code == "ORD04":
-                                logger.warning(f"License key already delivered (ORD04) for item {order_item.id}")
-                                order_item.status = "complete"
-                                await PaymentService._update_order_status_if_all_items_complete(db, order)
-                            else:
-                                logger.warning(f"License key error {error_code} for item {order_item.id}")
-                                order_item.status = "key_error"
-                        else:
-                            logger.warning(f"Unexpected key response for item {order_item.id}: {key_response}")
+                        await PaymentService._update_order_status_if_all_items_complete(db, order)
+                    elif key_response and "error" in key_response:
+                        error_code = key_response["error"]
+                        if error_code == "ORD03":
+                            logger.warning(f"License key not ready (ORD03) for item {order_item.id} - will retry later")
                             order_item.status = "pending_key"
-                        
+                            db.commit()
+                        elif error_code == "ORD01":
+                            logger.error(f"Invalid G2A order ID (ORD01) for item {order_item.id}")
+                            order_item.status = "failed"
+                            db.commit()
+                        elif error_code == "ORD04":
+                            logger.warning(f"License key already delivered (ORD04) for item {order_item.id} - but we need the actual key")
+                            # ORD04 means key was already delivered, but the response should still contain the key
+                            # Let's check if the key_response itself contains the key despite the error
+                            actual_key = None
+                            if "key" in key_response and key_response["key"]:
+                                actual_key = key_response["key"]
+                                logger.info(f"Found actual license key in ORD04 response for item {order_item.id}: {actual_key}")
+                            
+                            if actual_key:
+                                order_item.delivered_key = actual_key
+                                logger.info(f"Stored actual license key for ORD04 item {order_item.id}: {actual_key}")
+                            else:
+                                # If no key in response, make another API call to get it
+                                logger.info(f"No key in ORD04 response, making fresh API call for item {order_item.id}")
+                                fresh_response = await get_g2a_order_key(order_item.g2a_order_id)
+                                if fresh_response and isinstance(fresh_response, dict) and "key" in fresh_response:
+                                    order_item.delivered_key = fresh_response["key"]
+                                    logger.info(f"Retrieved fresh license key for ORD04 item {order_item.id}: {fresh_response['key']}")
+                                else:
+                                    order_item.delivered_key = "KEY_ALREADY_DELIVERED_ORD04"
+                                    logger.warning(f"Could not retrieve actual key for ORD04 item {order_item.id}, using placeholder")
+                            
+                            order_item.status = "complete"
+                            db.commit()
+                            await PaymentService._update_order_status_if_all_items_complete(db, order)
+                        elif error_code in ["API_UNAVAILABLE", "API_ERROR", "UNKNOWN_RESPONSE"]:
+                            logger.warning(f"G2A API issue ({error_code}) for item {order_item.id} - will retry later")
+                            order_item.status = "pending_key"
+                            db.commit()
+                        else:
+                            logger.warning(f"License key error {error_code} for item {order_item.id}")
+                            order_item.status = "key_error"
+                            db.commit()
                     else:
-                        logger.warning(f"G2A payment failed for item {order_item.id}")
-                        order_item.status = "failed"
+                        logger.warning(f"Unexpected key response for item {order_item.id}: {key_response}")
+                        order_item.status = "key_error"
+                        db.commit()
+                else:
+                    logger.warning(f"G2A payment failed for item {order_item.id}")
+                    order_item.status = "failed"
+                    db.commit()
                         
             except Exception as e:
                 logger.error(f"Error processing G2A flow for item {order_item.id}: {e}")
                 order_item.status = "failed"
+                db.commit()
     
     @staticmethod
     async def _retrieve_license_key_for_item(db: Session, order_item: OrderItem) -> None:
