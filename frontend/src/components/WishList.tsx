@@ -11,7 +11,7 @@ import { useConfirmation } from "../hooks/useConfirmation";
 export default function WishList() {
     const router = useRouter();
     const { wishlistData, summary, loading, clearWishlist, addAllToCart, removeFromWishlist } = useWishlist();
-    const { addToCart } = useCart();
+    const { addToCart, isInCart, refreshCart } = useCart();
     const { confirmationState, hideConfirmation, confirmAndExecute } = useConfirmation();
     const [searchTerm, setSearchTerm] = useState("");
     const [filteredItems, setFilteredItems] = useState(wishlistData);
@@ -31,6 +31,8 @@ export default function WishList() {
     const handleAddToCart = async (productId: string) => {
         try {
             await addToCart(productId, 1, false);
+            // Refresh cart to update UI state immediately
+            await refreshCart();
         } catch {
             toast.error("Failed to add to cart");
         }
@@ -65,21 +67,34 @@ export default function WishList() {
         );
     };
 
+    // Calculate items not in cart
+    const itemsNotInCart = wishlistData.filter(item => !isInCart(item.product_id));
+    const itemsNotInCartCount = itemsNotInCart.length;
+
     const handleAddAllToCart = async () => {
         if (wishlistData.length === 0) {
             toast.error("Your wishlist is empty");
             return;
         }
         
+        if (itemsNotInCartCount === 0) {
+            toast("All items are already in your cart");
+            return;
+        }
+        
         confirmAndExecute(
             {
                 title: 'Add All to Cart',
-                message: `Add all ${wishlistData.length} items to your cart?`,
+                message: `Add ${itemsNotInCartCount} items to your cart?`,
                 confirmText: 'Add All',
                 cancelText: 'Cancel',
                 type: 'info'
             },
-            addAllToCart
+            async () => {
+                await addAllToCart();
+                // Refresh cart to update UI state immediately
+                await refreshCart();
+            }
         );
     };
 
@@ -201,12 +216,17 @@ export default function WishList() {
                     <div className="mt-8 flex flex-wrap gap-4">
                         <button 
                             onClick={handleAddAllToCart}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2"
+                            disabled={itemsNotInCartCount === 0}
+                            className={`px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2 ${
+                                itemsNotInCartCount === 0 
+                                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+                                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                            }`}
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 11-4 0v-6m4 0V9a2 2 0 10-4 0v4.01" />
                             </svg>
-                            Add All to Cart ({wishlistData.length})
+                            Add All to Cart ({itemsNotInCartCount})
                         </button>
                         <button 
                             onClick={handleClearWishlist}

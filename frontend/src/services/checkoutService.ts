@@ -78,6 +78,26 @@ export interface PaymentIntentResponse {
   currency: string;
 }
 
+export interface BuyNowRequest {
+  product_id: string;
+}
+
+export interface BuyNowResponse {
+  id: number;
+  g2a_order_id: string | null;
+  product_id: string;
+  price: number;
+  total_price: number;
+  currency: string;
+  status: string;
+  payment_status: string;
+  stripe_payment_intent_id: string | null;
+  delivered_key: string | null;
+  created_at: string;
+  updated_at: string;
+  order_items: OrderItem[];
+}
+
 class CheckoutService {
     private getAuthHeaders() {
         const token = localStorage.getItem('access_token');
@@ -132,6 +152,22 @@ class CheckoutService {
       { headers: this.getAuthHeaders() }
     );
     return response.data;
+  }
+
+  async buyNow(data: BuyNowRequest): Promise<BuyNowResponse> {
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/orders/`,
+        data,
+        { headers: this.getAuthHeaders() }
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error.response && this.isAuthError(error.response.status)) {
+        this.handleAuthError();
+      }
+      throw error;
+    }
   }
 }
 

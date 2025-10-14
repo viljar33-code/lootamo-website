@@ -172,19 +172,28 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({ children }) 
         return;
       }
 
-      const response = await wishlistService.addAllToCart();
+      const result = await wishlistService.addAllToCart();
       
-      if (response.success) {
-        if (response.added_count > 0) {
-          toast.success(`Added ${response.added_count} items to cart`);
-          if (response.failed_items.length > 0) {
-            toast.error(`${response.failed_items.length} items could not be added`);
+      if (result.success) {
+        // Show detailed message based on what was added
+        if (result.added_count === result.total_items) {
+          toast.success(`Successfully added all ${result.added_count} items to cart`);
+        } else if (result.added_count > 0) {
+          const skippedInCart = result.failed_items.filter(item => item.error === "Item already in cart").length;
+          
+          if (skippedInCart > 0) {
+            toast.success(`Added ${result.added_count} new items to cart. ${skippedInCart} items were already in cart.`);
+          } else {
+            toast.success(`Added ${result.added_count} of ${result.total_items} items to cart`);
           }
         } else {
-          toast.error('No items could be added to cart');
+          toast("No new items were added to cart");
         }
+        
+        // Optionally refresh wishlist data to reflect any changes
+        await refreshWishlist();
       } else {
-        toast.error(response.message || 'Failed to add items to cart');
+        toast.error(result.message);
       }
     } catch (error) {
       console.error('Error adding all to cart:', error);

@@ -14,6 +14,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick }) =>
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
   const [addingToCart, setAddingToCart] = useState(false);
+  const [buyingNow, setBuyingNow] = useState(false);
   const router = useRouter();
   const { isInWishlist, toggleWishlist } = useWishlist();
   const { addToCart, isInCart } = useCart();
@@ -36,9 +37,20 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick }) =>
     }
   };
 
-  const handleBuyNow = (e: React.MouseEvent) => {
+  const handleBuyNow = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    router.push(`/checkout?product=${product.id}`);
+    try {
+      setBuyingNow(true);
+      const { checkoutService } = await import('../services/checkoutService');
+      const orderResponse = await checkoutService.buyNow({
+        product_id: product.id.toString()
+      });
+      router.push(`/checkout?orderId=${orderResponse.id}`);
+    } catch (error) {
+      console.error('Error creating order:', error);
+    } finally {
+      setBuyingNow(false);
+    }
   };
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
@@ -205,11 +217,22 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick }) =>
               )}
             </button>
             <button 
-              className="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 bg-green-600 text-white hover:bg-green-700 hover:shadow-md active:transform active:scale-95 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                buyingNow 
+                  ? 'bg-gray-400 text-white cursor-not-allowed' 
+                  : 'bg-green-600 text-white hover:bg-green-700 hover:shadow-md active:transform active:scale-95'
+              } disabled:bg-gray-400 disabled:cursor-not-allowed`}
               onClick={handleBuyNow}
-              disabled={!product.available_to_buy}
+              disabled={!product.available_to_buy || buyingNow}
             >
-              Buy Now
+              {buyingNow ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>Processing...</span>
+                </div>
+              ) : (
+                'Buy Now'
+              )}
             </button>
           </div>
 

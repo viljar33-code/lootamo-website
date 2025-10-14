@@ -6,7 +6,6 @@ from typing import Optional, List, Literal
 class OrderCreateRequest(BaseModel):
     """Request schema for creating an order"""
     product_id: str = Field(..., description="Product ID from G2A")
-    max_price: Optional[float] = Field(None, gt=0, description="Maximum price willing to pay (optional)")
 
 
 class OrderSummaryResponse(BaseModel):

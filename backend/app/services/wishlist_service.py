@@ -312,8 +312,26 @@ def add_all_wishlist_to_cart(db: Session, user_id: int) -> dict:
         added_count = 0
         failed_items = []
         
+        # Import Cart model to check existing items
+        from app.models.cart import Cart
+        
         for wishlist_item in wishlist_items:
             try:
+                # Check if item is already in cart
+                existing_cart_item = db.query(Cart).filter(
+                    Cart.user_id == user_id,
+                    Cart.product_id == wishlist_item.product_id
+                ).first()
+                
+                if existing_cart_item:
+                    # Skip items already in cart
+                    failed_items.append({
+                        "product_id": wishlist_item.product_id,
+                        "product_name": wishlist_item.product.name if wishlist_item.product else "Unknown",
+                        "error": "Item already in cart"
+                    })
+                    continue
+                
                 result = add_to_cart(db, user_id, wishlist_item.product_id, quantity=1)
                 if result["success"]:
                     added_count += 1
@@ -330,15 +348,8 @@ def add_all_wishlist_to_cart(db: Session, user_id: int) -> dict:
                     "error": str(e)
                 })
         
-        if added_count > 0:
-            try:
-                # Remove successfully added items from wishlist
-                for wishlist_item in wishlist_items:
-                    if wishlist_item.product_id not in [item["product_id"] for item in failed_items]:
-                        db.delete(wishlist_item)
-                db.commit()
-            except Exception as e:
-                logger.warning(f"Failed to clear wishlist after adding to cart: {e}")
+        # Keep items in wishlist - do not remove them after adding to cart
+        # This allows users to maintain their wishlist while also having items in cart
         
         total_items = len(wishlist_items)
         

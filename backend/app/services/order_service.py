@@ -99,18 +99,36 @@ class OrderService:
             except Exception as g2a_error:
                 logger.warning(f"G2A API call failed, creating order without G2A integration: {g2a_error}")
             
+            # Create order item for consistency with multi-item orders
+            order_item = OrderItem(
+                order_id=local_order.id,
+                product_id=order_request.product_id,
+                price=order_price,
+                quantity=1,
+                status="pending"
+            )
+            db.add(order_item)
+            
             db.commit()
             logger.info(f"Order committed to database with ID: {local_order.id}")
+            
+            # Refresh to get the order_items relationship
+            db.refresh(local_order)
             
             return OrderResponse(
                 id=local_order.id,
                 g2a_order_id=local_order.g2a_order_id,
                 product_id=local_order.product_id,
                 price=local_order.price,
+                total_price=local_order.total_price,
                 currency=local_order.currency,
                 status=local_order.status,
+                payment_status=local_order.payment_status,
+                stripe_payment_intent_id=local_order.stripe_payment_intent_id,
+                delivered_key=local_order.delivered_key,
                 created_at=local_order.created_at,
-                updated_at=local_order.updated_at
+                updated_at=local_order.updated_at,
+                order_items=[OrderItemResponse.model_validate(item) for item in local_order.order_items]
             )
             
         except Exception as e:

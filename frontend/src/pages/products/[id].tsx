@@ -402,7 +402,7 @@ export default function ProductDetailPage() {
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <div className="flex items-baseline gap-3">
-                        <span className="text-3xl font-bold text-green-600">
+                        cfghcvf<span className="text-3xl font-bold text-green-600">
                           {formatPrice(product.min_price)}
                         </span>
                         {product.retail_min_price && product.retail_min_price > (product.min_price || 0) && (

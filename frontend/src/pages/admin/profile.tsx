@@ -4,6 +4,7 @@ import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminHeader from "@/components/admin/AdminHeader";
 import { FiUser, FiMail, FiPhone, FiEdit2, FiLogOut, FiShield, FiBell, FiKey, FiActivity, FiCalendar, FiCheckCircle } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
+import { ProductService } from "@/services/productService";
 
 interface UserProfile {
   id: number;
@@ -23,12 +24,30 @@ interface UserProfile {
   avatar_url: string | null;
 }
 
+interface Order {
+  user_id: number;
+  user_name: string;
+  user_email: string;
+  product_name: string;
+  total_price: number;
+  currency: string;
+  order_items: number;
+  order_status: string;
+  payment_status: string;
+  order_date: string;
+}
+
 export default function AdminProfile() {
   const { api, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [totalProducts, setTotalProducts] = useState<number>(0);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [completedOrders, setCompletedOrders] = useState<number>(0);
+  const [pendingOrders, setPendingOrders] = useState<number>(0);
+  const [ordersLoading, setOrdersLoading] = useState(true);
 
   const fetchUserProfile = useCallback(async () => {
     if (!api) return;
@@ -45,9 +64,44 @@ export default function AdminProfile() {
     }
   }, [api]);
 
+  const fetchTotalProducts = useCallback(async () => {
+    try {
+      setProductsLoading(true);
+      const productService = ProductService.getInstance();
+      const response = await productService.getProducts({ skip: 0, limit: 1 });
+      setTotalProducts(response.total);
+    } catch (error) {
+      console.error('Failed to fetch total products:', error);
+    } finally {
+      setProductsLoading(false);
+    }
+  }, []);
+
+  const fetchOrderStatistics = useCallback(async () => {
+    if (!api) return;
+    
+    try {
+      setOrdersLoading(true);
+      const response = await api.get('/orders/admin/all?skip=0&limit=1000');
+      const orders = response.data.orders;
+      
+      const completed = orders.filter((order: Order) => order.order_status === 'complete').length;
+      const pending = orders.filter((order: Order) => order.order_status === 'pending').length;
+      
+      setCompletedOrders(completed);
+      setPendingOrders(pending);
+    } catch (error) {
+      console.error('Failed to fetch order statistics:', error);
+    } finally {
+      setOrdersLoading(false);
+    }
+  }, [api]);
+
   useEffect(() => {
     fetchUserProfile();
-  }, [fetchUserProfile]);
+    fetchTotalProducts();
+    fetchOrderStatistics();
+  }, [fetchUserProfile, fetchTotalProducts, fetchOrderStatistics]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -161,7 +215,13 @@ export default function AdminProfile() {
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="text-xs font-medium text-emerald-700 mb-1">Total Products</div>
-                            <div className="text-2xl font-bold text-emerald-900">120</div>
+                            <div className="text-2xl font-bold text-emerald-900">
+                              {productsLoading ? (
+                                <div className="animate-pulse">...</div>
+                              ) : (
+                                totalProducts.toLocaleString()
+                              )}
+                            </div>
                           </div>
                           <div className="p-2 bg-emerald-200 rounded-lg">
                             <FiActivity className="text-emerald-700" />
@@ -172,7 +232,13 @@ export default function AdminProfile() {
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="text-xs font-medium text-blue-700 mb-1">License Keys Delivered</div>
-                            <div className="text-2xl font-bold text-blue-900">4,500</div>
+                            <div className="text-2xl font-bold text-blue-900">
+                              {ordersLoading ? (
+                                <div className="animate-pulse">...</div>
+                              ) : (
+                                completedOrders.toLocaleString()
+                              )}
+                            </div>
                           </div>
                           <div className="p-2 bg-blue-200 rounded-lg">
                             <FiCheckCircle className="text-blue-700" />
@@ -183,7 +249,13 @@ export default function AdminProfile() {
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="text-xs font-medium text-amber-700 mb-1">Pending Keys</div>
-                            <div className="text-2xl font-bold text-amber-900">25</div>
+                            <div className="text-2xl font-bold text-amber-900">
+                              {ordersLoading ? (
+                                <div className="animate-pulse">...</div>
+                              ) : (
+                                pendingOrders.toLocaleString()
+                              )}
+                            </div>
                           </div>
                           <div className="p-2 bg-amber-200 rounded-lg">
                             <FiKey className="text-amber-700" />

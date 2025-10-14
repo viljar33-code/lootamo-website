@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { FaCreditCard, FaLock, FaShieldAlt, FaSpinner } from 'react-icons/fa';
 import { useCart } from '../contexts/CartContext';
+import { useAuth } from '../contexts/AuthContext';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, useStripe, useElements } from '@stripe/react-stripe-js';
 import {
@@ -196,6 +197,7 @@ const CheckoutForm: React.FC<{ order: Order | null }> = ({ order }) => {
 export default function Checkout() {
   const router = useRouter();
   const { orderId } = router.query;
+  const { user } = useAuth();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -223,11 +225,11 @@ export default function Checkout() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <FaSpinner className="animate-spin w-8 h-8 text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading checkout details...</p>
-        </div>
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900 mx-auto mb-4"></div>
+        <p className="text-gray-600">Loading checkout details...</p>
       </div>
+    </div>
     );
   }
 
@@ -286,6 +288,13 @@ export default function Checkout() {
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Order Summary</h2>
             
             <div className="space-y-4">
+              {user && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Customer Email:</span>
+                  <span className="font-medium">{user.email}</span>
+                </div>
+              )}
+              
               <div className="flex justify-between">
                 <span className="text-gray-600">Order ID:</span>
                 <span className="font-medium">#{order.id}</span>
