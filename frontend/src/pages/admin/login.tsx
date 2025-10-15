@@ -82,8 +82,8 @@ export default function AdminLogin() {
                 <Image
                   src="/images/logo1.png"
                   alt="Lootamo"
-                  width={160}
-                  height={40}
+                  width={120}
+                  height={16}
                   className="h-12 w-auto"
                 />
               </Link>

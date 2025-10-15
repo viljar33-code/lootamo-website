@@ -13,7 +13,7 @@ const games = [
     description: "Get your FREE digital Smart Prompt Guide!",
     tag: "PROMO",
     tagColor: "bg-pink-500",
-    image: "/images/heroCardImg2.avif",
+    image: "/images/heroCardImg2.avif"
   },
   {
     title: "HOLLOW KNIGHT: SILKSONG",

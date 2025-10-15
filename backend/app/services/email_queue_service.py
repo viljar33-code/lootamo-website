@@ -98,7 +98,6 @@ class EmailQueueService:
             for email in pending_emails:
                 retry_log_id = None
                 try:
-                    # Log retry start (skip order_id for email retries to avoid foreign key constraint)
                     retry_log_id = RetryLogService.log_retry_start(
                         db=db,
                         retry_type="email_sending",

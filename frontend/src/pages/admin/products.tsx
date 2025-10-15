@@ -35,6 +35,8 @@ export default function AdminProducts() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [refreshing, setRefreshing] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
+  const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({});
   const itemsPerPage = 10;
 
   const getPageNumbers = () => {
@@ -144,6 +146,17 @@ export default function AdminProducts() {
     setCurrentPage(1);
   };
 
+  const toggleFilters = () => {
+    setShowFilters(!showFilters);
+  };
+
+  const toggleCategoryExpansion = (productId: string) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [productId]: !prev[productId]
+    }));
+  };
+
   const formatPrice = (price: number, currency: string) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -245,13 +258,24 @@ export default function AdminProducts() {
 
           {/* Filters */}
           <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mx-6 hover:shadow-xl transition-all duration-300">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <FiSearch className="text-blue-600 text-lg" />
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <FiSearch className="text-blue-600 text-lg" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">Search Products</h2>
               </div>
-              <h2 className="text-xl font-bold text-gray-900">Search Products</h2>
+              <button
+                type="button"
+                onClick={toggleFilters}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-semibold"
+              >
+                <FiFilter className="text-sm" />
+                {showFilters ? 'Hide Filters' : 'Show Filters'}
+              </button>
             </div>
-            <form onSubmit={handleSearch} className="flex flex-wrap gap-4 items-end">
+            {showFilters && (
+              <form onSubmit={handleSearch} className="flex flex-wrap gap-4 items-end">
               <div className="flex-1 min-w-64">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Search Products</label>
                 <div className="relative">
@@ -288,13 +312,7 @@ export default function AdminProducts() {
                 </select>
               </div>
               <div className="flex gap-3">
-                <button
-                  type="submit"
-                  className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 font-semibold"
-                >
-                  <FiFilter className="text-sm" />
-                  Filter
-                </button>
+               
                 <button
                   type="button"
                   onClick={resetFilters}
@@ -303,7 +321,8 @@ export default function AdminProducts() {
                   Reset
                 </button>
               </div>
-            </form>
+              </form>
+            )}
           </div>
 
           {/* Products Table */}
@@ -379,19 +398,29 @@ export default function AdminProducts() {
                         <td className="px-6 py-4">
                           <div className="flex flex-wrap gap-2">
                             {product.categories && product.categories.length > 0 ? (
-                              product.categories.slice(0, 2).map((category) => (
-                                <span
-                                  key={category.id}
-                                  className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800"
-                                >
-                                  {category.name}
-                                </span>
-                              ))
+                              <>
+                                {(expandedCategories[product.id] ? product.categories : product.categories.slice(0, 2)).map((category) => (
+                                  <span
+                                    key={category.id}
+                                    className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800"
+                                  >
+                                    {category.name}
+                                  </span>
+                                ))}
+                                {product.categories.length > 2 && (
+                                  <button
+                                    onClick={() => toggleCategoryExpansion(product.id)}
+                                    className="text-xs text-blue-600 hover:text-blue-800 font-medium cursor-pointer hover:underline"
+                                  >
+                                    {expandedCategories[product.id] 
+                                      ? 'Show less' 
+                                      : `+${product.categories.length - 2} more`
+                                    }
+                                  </button>
+                                )}
+                              </>
                             ) : (
                               <span className="text-xs text-gray-500">No categories</span>
-                            )}
-                            {product.categories && product.categories.length > 2 && (
-                              <span className="text-xs text-gray-500 font-medium">+{product.categories.length - 2} more</span>
                             )}
                           </div>
                         </td>

@@ -16,14 +16,14 @@ export default function Navbar() {
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-  console.log(``)
+
   return (
     <header className={`top-0 z-40 sticky transition-shadow ${scrolled ? "shadow-md bg-white/90 backdrop-blur-sm" : "bg-transparent"}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-14 md:h-16">
           <div className="flex items-center gap-4">
             <Link href="/" className="flex items-center gap-3">
-              <Image src="/images/logo1.png" alt="Lootamo" width={136} height={16} priority className="md:h-12 h-10"/>
+              <Image src="/images/logo1.png" alt="Lootamo" width={120} height={16} className="h-10 w-auto"/>
               {/* <span className="font-bold text-lg text-gray-900">Lootamo</span> */}
             </Link>
 

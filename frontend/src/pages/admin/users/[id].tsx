@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import { useAuth } from '@/contexts/AuthContext';
-import { AdminService, AdminUser } from '@/services/adminService';
+import { AdminService, AdminUser, UserOrderStats } from '@/services/adminService';
 import { 
   FiUser, 
   FiMail, 
@@ -22,6 +22,7 @@ export default function UserDetails() {
   const { id } = router.query;
   const { api } = useAuth();
   const [user, setUser] = useState<AdminUser | null>(null);
+  const [orderStats, setOrderStats] = useState<UserOrderStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,8 +37,15 @@ export default function UserDetails() {
       setLoading(true);
       setError(null);
       const adminService = new AdminService(api);
-      const userData = await adminService.getUserById(userId);
+      
+      // Fetch user details and order statistics in parallel
+      const [userData, orderStatsData] = await Promise.all([
+        adminService.getUserById(userId),
+        adminService.getUserOrderStats(userId)
+      ]);
+      
       setUser(userData);
+      setOrderStats(orderStatsData);
     } catch (error) {
       console.error('Failed to fetch user details:', error);
       setError('Failed to load user details');
@@ -291,27 +299,16 @@ export default function UserDetails() {
                 <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
                   <div>
                     <div className="text-sm font-medium text-gray-700">Total Orders</div>
-                    <div className="text-2xl font-bold text-blue-600">{user.total_orders ?? 0}</div>
+                    <div className="text-2xl font-bold text-blue-600">{orderStats?.total_orders ?? 0}</div>
                   </div>
                 </div>
                 
                 <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
                   <div>
                     <div className="text-sm font-medium text-gray-700">Total Spent</div>
-                    <div className="text-2xl font-bold text-green-600">€{(user.total_spent ?? 0).toFixed(2)}</div>
+                    <div className="text-2xl font-bold text-green-600">€{(orderStats?.total_spent ?? 0).toFixed(2)}</div>
                   </div>
-                </div>
-                
-                {user.total_orders && user.total_orders > 0 && (
-                  <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg border border-purple-200">
-                    <div>
-                      <div className="text-sm font-medium text-gray-700">Average Order Value</div>
-                      <div className="text-2xl font-bold text-purple-600">
-                        €{((user.total_spent ?? 0) / user.total_orders).toFixed(2)}
-                      </div>
-                    </div>
-                  </div>
-                )}
+                </div>                              
               </div>
             </div>
           </div>

@@ -35,6 +35,13 @@ export interface AdminUser {
   total_spent?: number;
 }
 
+export interface UserOrderStats {
+  total_orders: number;
+  total_spent: number;
+  average_order_value: number;
+}
+
+
 export interface ErrorLog {
   id: number;
   display_message: string;
@@ -263,6 +270,11 @@ export class AdminService {
 
   async getUserById(userId: number): Promise<AdminUser> {
     const response = await this.api.get(`/admin/users/${userId}`);
+    return response.data;
+  }
+
+  async getUserOrderStats(userId: number): Promise<UserOrderStats> {
+    const response = await this.api.get(`/users/${userId}/order-statistics`);
     return response.data;
   }
 

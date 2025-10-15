@@ -1,7 +1,7 @@
 import Head from "next/head";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import { FiUsers, FiPlus, FiEdit, FiTrash2, FiSearch, FiFilter, FiDownload, FiRefreshCw, FiEye, FiUserCheck, FiUserX, FiShield, FiMail, FiPhone, FiCalendar, FiUserPlus, FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { FiUsers, FiTrash2, FiSearch, FiRefreshCw, FiEye, FiShield, FiMail, FiUserPlus, FiChevronLeft, FiChevronRight, FiX } from "react-icons/fi";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import { useAuth } from '@/contexts/AuthContext';
 import { AdminService, AdminUser } from '@/services/adminService';
@@ -40,6 +40,18 @@ function AdminUsers() {
     userId: number;
     userEmail: string;
   }>({ isOpen: false, userId: 0, userEmail: '' });
+  
+  const [addUserModal, setAddUserModal] = useState(false);
+  const [newUser, setNewUser] = useState({
+    email: '',
+    username: '',
+    first_name: '',
+    last_name: '',
+    phone: '',
+    password: '',
+    role: 'customer' as 'customer' | 'admin'
+  });
+  const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -117,14 +129,68 @@ function AdminUsers() {
     setDeleteModal({ isOpen: false, userId: 0, userEmail: '' });
   };
 
+  const handleAddUser = () => {
+    setAddUserModal(true);
+  };
+
+  const handleAddUserCancel = () => {
+    setAddUserModal(false);
+    setNewUser({
+      email: '',
+      username: '',
+      first_name: '',
+      last_name: '',
+      phone: '',
+      password: '',
+      role: 'customer'
+    });
+  };
+
+  const handleCreateUser = async () => {
+    try {
+      setIsCreating(true);
+      const adminService = new AdminService(api);
+      await adminService.createUser(newUser);
+      await fetchUsers();
+      await fetchUserStats();
+      handleAddUserCancel();
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to create user: ${errorMessage}`);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setNewUser(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
   const handleUpdateRole = async (userId: number, newRole: 'customer' | 'supplier' | 'manager' | 'admin') => {
     try {
       const adminService = new AdminService(api);
       await adminService.updateUserRole(userId, newRole);
-      await fetchUsers(); 
+      await fetchUsers();
+      await fetchUserStats(); // Refresh stats after role change
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      alert(`Failed to update user role: ${errorMessage}`);
+      console.error('Role update error:', error);
+      let errorMessage = 'Failed to update user role';
+      
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { status?: number; data?: { detail?: string } } };
+        if (axiosError.response?.status === 403) {
+          errorMessage = 'Access denied. You do not have permission to update user roles.';
+        } else if (axiosError.response?.data?.detail) {
+          errorMessage = axiosError.response.data.detail;
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      alert(errorMessage);
     }
   };
 
@@ -136,12 +202,22 @@ function AdminUsers() {
     
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
     
-    const matchesStatus = 
-      statusFilter === 'all' ||
-      (statusFilter === 'active' && user.is_active) ||
-      (statusFilter === 'inactive' && !user.is_active) ||
-      (statusFilter === 'verified' && user.is_verified) ||
-      (statusFilter === 'unverified' && !user.is_verified);
+    const matchesStatus = (() => {
+      switch (statusFilter) {
+        case 'all':
+          return true;
+        case 'active':
+          return user.is_active && user.is_verified;
+        case 'inactive':
+          return !user.is_active;
+        case 'verified':
+          return user.is_verified;
+        case 'unverified':
+          return !user.is_verified;
+        default:
+          return true;
+      }
+    })();
     
     return matchesSearch && matchesRole && matchesStatus;
   });
@@ -311,7 +387,10 @@ function AdminUsers() {
                 <FiRefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
                 Refresh
               </button>
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+              <button 
+                onClick={handleAddUser}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+              >
                 <FiUserPlus className="w-4 h-4" />
                 Add User
               </button>
@@ -526,6 +605,120 @@ function AdminUsers() {
           cancelText="Cancel"
           type="danger"
         />
+
+        {/* Add User Modal */}
+        {addUserModal && (
+          <div className="fixed inset-0 flex items-center justify-center z-50" style={{ background: '#00000080' }}>
+            <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-gray-900">Add New User</h3>
+                <button
+                  onClick={handleAddUserCancel}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <FiX className="w-6 h-6" />
+                </button>
+              </div>
+
+              <form onSubmit={(e) => { e.preventDefault(); handleCreateUser(); }} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                  <input
+                    type="email"
+                    value={newUser.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Username *</label>
+                  <input
+                    type="text"
+                    value={newUser.username}
+                    onChange={(e) => handleInputChange('username', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                    <input
+                      type="text"
+                      value={newUser.first_name}
+                      onChange={(e) => handleInputChange('first_name', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                    <input
+                      type="text"
+                      value={newUser.last_name}
+                      onChange={(e) => handleInputChange('last_name', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                  <input
+                    type="tel"
+                    value={newUser.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+                  <input
+                    type="password"
+                    value={newUser.password}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                    minLength={6}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Role *</label>
+                  <select
+                    value={newUser.role}
+                    onChange={(e) => handleInputChange('role', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="customer">User</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={handleAddUserCancel}
+                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isCreating || !newUser.email || !newUser.username || !newUser.password}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isCreating ? 'Creating...' : 'Create User'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </AdminLayout>
     </>
   );
