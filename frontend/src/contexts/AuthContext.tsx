@@ -55,6 +55,9 @@ interface AuthContextType extends AuthState {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Global refresh token promise to prevent race conditions
+let globalRefreshTokenPromise: Promise<string> | null = null;
+
 const createApiInstance = (baseURL: string) => {
   const root = baseURL.replace(/\/$/, '');
   const baseWithV1 = /\/api\/v\d+$/i.test(root) ? root : `${root}/api/v1`;
@@ -93,32 +96,52 @@ const createApiInstance = (baseURL: string) => {
         originalRequest._retry = true;
 
         try {
+          // Use global mutex to prevent race conditions
+          if (globalRefreshTokenPromise) {
+            const newToken = await globalRefreshTokenPromise;
+            originalRequest.headers = originalRequest.headers || {};
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            return instance(originalRequest);
+          }
+
           const refreshToken = localStorage.getItem('refresh_token');
           if (!refreshToken) {
             return Promise.reject(error);
           }
 
-          const response = await axios.post(`${baseURL}/auth/refresh`, {
-            refresh_token: refreshToken
+          globalRefreshTokenPromise = new Promise(async (resolve, reject) => {
+            try {
+              const response = await axios.post(`${baseURL}/auth/refresh`, {
+                refresh_token: refreshToken
+              });
+
+              const { access_token, refresh_token } = response.data;
+
+              localStorage.setItem('access_token', access_token);
+              if (refresh_token) {
+                localStorage.setItem('refresh_token', refresh_token);
+              }
+
+              resolve(access_token);
+            } catch (refreshError) {
+              if (typeof window !== 'undefined') {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('refresh_token');
+                localStorage.removeItem('user');
+              }
+              reject(refreshError);
+            } finally {
+              globalRefreshTokenPromise = null;
+            }
           });
 
-          const { access_token, refresh_token } = response.data;
-
-          localStorage.setItem('access_token', access_token);
-          if (refresh_token) {
-            localStorage.setItem('refresh_token', refresh_token);
-          }
-
+          const newToken = await globalRefreshTokenPromise;
           originalRequest.headers = originalRequest.headers || {};
-          originalRequest.headers.Authorization = `Bearer ${access_token}`;
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
 
           return instance(originalRequest);
         } catch (refreshError) {
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('refresh_token');
-            localStorage.removeItem('user');
-          }
+          globalRefreshTokenPromise = null;
           return Promise.reject(refreshError);
         }
       }
@@ -179,6 +202,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [api, updateState]);
 
   const refreshAccessToken = useCallback(async (): Promise<string> => {
+    // Use global mutex to prevent race conditions across all refresh attempts
+    if (globalRefreshTokenPromise) {
+      return globalRefreshTokenPromise;
+    }
+
     if (refreshTokenPromise.current) {
       return refreshTokenPromise.current;
     }
@@ -189,7 +217,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error('No refresh token available');
       }
 
-      refreshTokenPromise.current = new Promise(async (resolve, reject) => {
+      // Set both local and global promises to the same instance
+      const promise = new Promise<string>(async (resolve, reject) => {
         try {
           const response = await api.post<TokenResponse>('/auth/refresh', {
             refresh_token: refreshToken,
@@ -208,12 +237,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           reject(error);
         } finally {
           refreshTokenPromise.current = null;
+          globalRefreshTokenPromise = null;
         }
       });
 
-      return refreshTokenPromise.current;
+      refreshTokenPromise.current = promise;
+      globalRefreshTokenPromise = promise;
+
+      return promise;
     } catch (error) {
       refreshTokenPromise.current = null;
+      globalRefreshTokenPromise = null;
       throw error;
     }
   }, [api, clearAuthData]);

@@ -120,7 +120,8 @@ function AdminAnalytics() {
                     Export Data
                   </button> */}
                   <button
-                    onClick={handleRefresh}
+                    onClick={handleRefresh} 
+                    style={{ cursor: 'pointer' }}
                     disabled={refreshing}
                     className="flex items-center gap-2 px-4 py-3 text-sm bg-white/10 backdrop-blur-sm text-white rounded-xl hover:bg-white/20 disabled:opacity-50 transition-all duration-200 border border-white/20"
                   >

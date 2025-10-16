@@ -1,5 +1,5 @@
 import Head from "next/head";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FiDollarSign, FiRefreshCw, FiClock, FiChevronLeft, FiChevronRight, FiX, FiCheck } from "react-icons/fi";
 import AdminLayout from '@/components/layouts/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
@@ -66,12 +66,7 @@ function AdminPayments() {
     customerName: string;
   }>({ isOpen: false, paymentId: '', customerName: '' });
 
-  useEffect(() => {
-    fetchPayments();
-    fetchPaymentStats();
-  }, []);
-
-  const fetchPayments = async () => {
+  const fetchPayments = useCallback(async () => {
     try {
       setLoading(true);
       const response = await api.get('/orders/admin/all?limit=1000');
@@ -96,14 +91,13 @@ function AdminPayments() {
       
       setPayments(paymentRecords);
     } catch (error) {
-      console.error('Failed to fetch payments:', error);
-      setPayments([]);
+      console.error('Error fetching payments:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [api]);
 
-  const fetchPaymentStats = async () => {
+  const fetchPaymentStats = useCallback(async () => {
     try {
       const totalRevenue = payments
         .filter((payment: PaymentRecord) => payment.status === 'paid')
@@ -138,7 +132,17 @@ function AdminPayments() {
         refundedPayments: 0
       });
     }
-  };
+  }, [payments]);
+
+  useEffect(() => {
+    fetchPayments();
+  }, [fetchPayments]);
+
+  useEffect(() => {
+    if (payments.length > 0) {
+      fetchPaymentStats();
+    }
+  }, [payments, fetchPaymentStats]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -170,13 +174,6 @@ function AdminPayments() {
     }
   };
 
-  const handleDeleteClick = (payment: PaymentRecord) => {
-    setDeleteModal({
-      isOpen: true,
-      paymentId: payment.id,
-      customerName: payment.customerName || payment.customerEmail
-    });
-  };
 
   const handleDeleteConfirm = async () => {
     try {      
@@ -264,7 +261,7 @@ function AdminPayments() {
                 </div>
               </div>
               <div className="mt-4 flex items-center text-sm">
-                <span className="text-green-700 font-semibold">+€{stats.todayRevenue}</span>
+                <span className="text-green-700 font-semibold">+€{stats.todayRevenue.toFixed(2)}</span>
                 <span className="text-gray-600 ml-1">today</span>
               </div>
             </div>
@@ -318,6 +315,7 @@ function AdminPayments() {
               <button
                 onClick={fetchPayments}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 font-semibold"
+                style={{ cursor: "pointer" }}
               >
                 <FiRefreshCw className="text-sm" />
                 Refresh
@@ -334,6 +332,7 @@ function AdminPayments() {
                       ? 'bg-blue-600 text-white shadow-lg transform -translate-y-0.5'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md'
                   }`}
+                  style={{ cursor: "pointer" }}
                 >
                   {status.charAt(0).toUpperCase() + status.slice(1)}
                 </button>

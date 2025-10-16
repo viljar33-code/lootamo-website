@@ -1,7 +1,8 @@
 import asyncio
-import aiosmtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+# SMTP imports (COMMENTED OUT - USING SENDGRID)
+# import aiosmtplib
+# from email.mime.text import MIMEText
+# from email.mime.multipart import MIMEMultipart
 from typing import Optional, List, Dict, Any
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from pathlib import Path
@@ -11,6 +12,9 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
 
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail, From, To, Subject, HtmlContent, PlainTextContent
+
 from app.core.config import settings
 from app.services.retry_log_service import RetryLogService
 from app.services.error_log_service import ErrorLogService
@@ -18,13 +22,21 @@ from app.services.error_log_service import ErrorLogService
 
 class EmailService:
     def __init__(self):
-        self.smtp_host = settings.SMTP_HOST
-        self.smtp_port = settings.SMTP_PORT
-        self.smtp_username = settings.SMTP_USERNAME
-        self.smtp_password = settings.SMTP_PASSWORD
-        self.from_email = settings.SMTP_FROM_EMAIL
-        self.from_name = settings.SMTP_FROM_NAME
-        self.use_tls = settings.SMTP_USE_TLS
+        # SMTP Configuration (COMMENTED OUT - USING SENDGRID)
+        # self.smtp_host = settings.SMTP_HOST
+        # self.smtp_port = settings.SMTP_PORT
+        # self.smtp_username = settings.SMTP_USERNAME
+        # self.smtp_password = settings.SMTP_PASSWORD
+        # self.from_email = settings.SMTP_FROM_EMAIL
+        # self.from_name = settings.SMTP_FROM_NAME
+        # self.use_tls = settings.SMTP_USE_TLS
+        
+        # SendGrid Configuration
+        self.sendgrid_api_key = settings.SENDGRID_API_KEY
+        self.from_email = settings.EMAIL_FROM
+        self.from_name = settings.EMAIL_FROM_NAME
+        self.reply_to = settings.EMAIL_REPLY_TO
+        self.sg = SendGridAPIClient(api_key=self.sendgrid_api_key)
         
         template_dir = Path(__file__).parent.parent / "templates" / "emails"
         template_dir.mkdir(parents=True, exist_ok=True)
@@ -44,34 +56,41 @@ class EmailService:
         retry_delay: float = 2.0,
         order_id: Optional[str] = None
     ) -> bool:
-        """Send an email with retry logic (retry logging handled by caller)"""
+        """Send an email with retry logic using SendGrid"""
         last_exception = None
         
         for attempt in range(max_retries + 1):
             try:
-                message = MIMEMultipart("alternative")
-                message["Subject"] = subject
-                message["From"] = f"{self.from_name} <{self.from_email}>"
-                message["To"] = to_email
-                if text_content:
-                    text_part = MIMEText(text_content, "plain")
-                    message.attach(text_part)
-                html_part = MIMEText(html_content, "html")
-                message.attach(html_part)
-
-                await aiosmtplib.send(
-                    message,
-                    hostname=self.smtp_host,
-                    port=self.smtp_port,
-                    start_tls=self.use_tls,
-                    username=self.smtp_username,
-                    password=self.smtp_password,
+                # SendGrid email construction
+                from_email = From(self.from_email, self.from_name)
+                to_email_obj = To(to_email)
+                subject_obj = Subject(subject)
+                html_content_obj = HtmlContent(html_content)
+                
+                mail = Mail(
+                    from_email=from_email,
+                    to_emails=to_email_obj,
+                    subject=subject_obj,
+                    html_content=html_content_obj
                 )
                 
-                if attempt > 0:
-                    print(f"Email sent successfully to {to_email} on attempt {attempt + 1}")
+                # Add plain text content if provided
+                if text_content:
+                    mail.plain_text_content = PlainTextContent(text_content)
                 
-                return True
+                # Set reply-to if configured
+                if self.reply_to:
+                    mail.reply_to = self.reply_to
+                
+                # Send email via SendGrid
+                response = self.sg.send(mail)
+                
+                if response.status_code in [200, 201, 202]:
+                    if attempt > 0:
+                        print(f"Email sent successfully to {to_email} on attempt {attempt + 1} (SendGrid)")
+                    return True
+                else:
+                    raise Exception(f"SendGrid API returned status code: {response.status_code}")
 
             except Exception as e:
                 last_exception = e
@@ -83,6 +102,44 @@ class EmailService:
                     print(f"Email failed permanently for {to_email} after {max_retries + 1} attempts: {str(e)}")
         
         return False
+        
+        # SMTP CODE (COMMENTED OUT - USING SENDGRID)
+        # for attempt in range(max_retries + 1):
+        #     try:
+        #         message = MIMEMultipart("alternative")
+        #         message["Subject"] = subject
+        #         message["From"] = f"{self.from_name} <{self.from_email}>"
+        #         message["To"] = to_email
+        #         if text_content:
+        #             text_part = MIMEText(text_content, "plain")
+        #             message.attach(text_part)
+        #         html_part = MIMEText(html_content, "html")
+        #         message.attach(html_part)
+        #
+        #         await aiosmtplib.send(
+        #             message,
+        #             hostname=self.smtp_host,
+        #             port=self.smtp_port,
+        #             start_tls=self.use_tls,
+        #             username=self.smtp_username,
+        #             password=self.smtp_password,
+        #         )
+        #         
+        #         if attempt > 0:
+        #             print(f"Email sent successfully to {to_email} on attempt {attempt + 1}")
+        #         
+        #         return True
+        #
+        #     except Exception as e:
+        #         last_exception = e
+        #         if attempt < max_retries:
+        #             print(f"Email attempt {attempt + 1} failed for {to_email}: {str(e)}. Retrying in {retry_delay}s...")
+        #             await asyncio.sleep(retry_delay)
+        #             retry_delay *= 1.5  # Exponential backoff
+        #         else:
+        #             print(f"Email failed permanently for {to_email} after {max_retries + 1} attempts: {str(e)}")
+        # 
+        # return False
 
     async def send_welcome_email(self, to_email: str, username: str) -> bool:
         """Send welcome email to new user"""

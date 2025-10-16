@@ -216,6 +216,7 @@ export default function AdminLogs() {
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                       autoRefresh ? 'bg-blue-600' : 'bg-gray-200'
                     }`}
+                    style={{ cursor: "pointer" }}
                   >
                     <span
                       className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
@@ -261,6 +262,7 @@ export default function AdminLogs() {
                     }
                   }}
                   className="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  style={{ cursor: "pointer" }}
                 >
                   Manual Refresh
                 </button>
@@ -358,6 +360,7 @@ export default function AdminLogs() {
                   <button 
                     onClick={() => setShowAllSyncLogs(!showAllSyncLogs)}
                     className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                    style={{ cursor: "pointer" }}
                   >
                     <FiEye className="mr-2 h-4 w-4" />
                     {showAllSyncLogs ? 'Show Less' : 'View All'}
@@ -567,6 +570,7 @@ export default function AdminLogs() {
                     <button 
                       onClick={() => setShowAllErrorLogs(!showAllErrorLogs)}
                       className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                      style={{ cursor: "pointer" }}
                     >
                       {showAllErrorLogs ? 'Show less' : 'View all'}
                     </button>
@@ -653,6 +657,7 @@ export default function AdminLogs() {
                     <button 
                       onClick={() => setShowAllRetryLogs(!showAllRetryLogs)}
                       className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                      style={{ cursor: "pointer" }}
                     >
                       {showAllRetryLogs ? 'Show less' : 'View all'}
                     </button>
@@ -742,7 +747,7 @@ export default function AdminLogs() {
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style={{ background: "#0000009c" }}>
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               Confirm Delete
@@ -754,12 +759,14 @@ export default function AdminLogs() {
               <button
                 onClick={() => setShowDeleteConfirm(null)}
                 className="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                style={{ cursor: "pointer" }}
               >
                 Cancel
               </button>
               <button
                 onClick={executeDelete}
                 className="px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+                style={{ cursor: "pointer" }}
               >
                 Delete
               </button>

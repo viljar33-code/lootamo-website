@@ -7,6 +7,7 @@ from typing import Optional, Dict, Any
 from sqlalchemy.orm import Session, joinedload
 from app.models.order import Order
 from app.models.order_item import OrderItem
+from app.models.product import Product
 from app.schemas.payment import PaymentIntentRequest, PaymentIntentResponse
 from app.schemas.order_item import LicenseKeyResponse, OrderItemWithKey
 from app.services.g2a_service import pay_g2a_order, get_g2a_order_key, create_g2a_order, get_g2a_order_details, confirm_g2a_order_payment
@@ -506,9 +507,13 @@ class PaymentService:
             if items_with_keys:
                 license_keys = []
                 for item in items_with_keys:
+                    # Fetch actual product name from database
+                    product = db.query(Product).filter(Product.id == str(item.product_id)).first()
+                    product_name = product.name if product else str(item.product_id)
+                    
                     license_keys.append({
                         "product_id": item.product_id,
-                        "product_name": item.product_id,  # TODO: Get actual product name
+                        "product_name": product_name,
                         "license_key": item.delivered_key,
                         "quantity": getattr(item, 'quantity', 1)
                     })

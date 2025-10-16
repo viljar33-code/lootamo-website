@@ -7,8 +7,9 @@ from app.services.auth_service import AuthService
 from app.schemas.user import UserResponse
 from app.api.dependencies import get_current_active_user
 from app.models.user import User, UserRole
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, validator
 from typing import Optional
+from app.core.validators import validate_password
 
 router = APIRouter()
 
@@ -22,6 +23,24 @@ class AdminUserCreate(BaseModel):
     phone: Optional[str] = Field(None, max_length=20)
     password: str = Field(..., min_length=8, max_length=100)
     role: UserRole = Field(..., description="User role (admin, manager, supplier)")
+
+
+class AdminChangePassword(BaseModel):
+    """Schema for admin password change"""
+    current_password: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=8, max_length=100)
+    confirm_password: str = Field(..., min_length=8, max_length=100)
+    
+    @validator('new_password')
+    def validate_password_strength(cls, v):
+        return validate_password(v)
+    
+    @validator('confirm_password')
+    def passwords_match(cls, v, values, **kwargs):
+        if 'password' in values and v != values['new_password']:
+            raise ValueError('Passwords do not match')
+        return v
+
 
 def require_admin_role(current_user: User = Depends(get_current_active_user)):
     """Dependency to ensure only admins can access certain endpoints"""
@@ -160,3 +179,38 @@ async def delete_user(
         )
     
     return {"message": "User deleted successfully", "user_id": user_id}
+
+
+@router.post("/change-password")
+async def admin_change_password(
+    payload: AdminChangePassword,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_async_db)
+):
+    """Change password for authenticated admin user"""
+    # Validate that new password is different from current
+    if payload.current_password == payload.new_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password must be different from current password"
+        )
+
+    auth_service = AuthService(db)
+    
+    try:
+        await auth_service.change_password(
+            current_user,
+            payload.current_password,
+            payload.new_password
+        )
+        
+        return {"message": "Password changed successfully"}
+    
+    except HTTPException as e:
+        # Re-raise HTTP exceptions from auth service
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to change password"
+        )

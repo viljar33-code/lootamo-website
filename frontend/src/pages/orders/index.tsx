@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
@@ -14,7 +13,6 @@ import { orderService, Order } from '../../services/orderService';
 import withAuth from '@/hocs/withAuth';
 
 const OrdersPage: React.FC = () => {
-  const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +31,7 @@ const OrdersPage: React.FC = () => {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
         },
       });
 
@@ -194,7 +192,7 @@ const OrdersPage: React.FC = () => {
                       <div className="mt-4 pt-4 border-t border-gray-200">
                         <h4 className="text-sm font-medium text-gray-900 mb-2">Items:</h4>
                         <div className="space-y-1">
-                          {order.order_items.slice(0, 3).map((item, index) => (
+                          {order.order_items.slice(0, 3).map((item) => (
                             <div key={item.id} className="text-sm text-gray-600">
                               Product {item.product_id} - €{item.price.toFixed(2)}
                             </div>

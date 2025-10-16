@@ -383,6 +383,7 @@ function AdminUsers() {
                 onClick={handleRefresh}
                 disabled={refreshing}
                 className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50"
+                style={{ cursor: "pointer" }}
               >
                 <FiRefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
                 Refresh
@@ -390,6 +391,7 @@ function AdminUsers() {
               <button 
                 onClick={handleAddUser}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                style={{ cursor: "pointer" }}
               >
                 <FiUserPlus className="w-4 h-4" />
                 Add User
@@ -414,6 +416,7 @@ function AdminUsers() {
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value as 'all' | 'customer' | 'supplier' | 'manager' | 'admin')}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              style={{ cursor: "pointer" }}
             >
               <option value="all">All Roles</option>
               <option value="customer">Customers</option>
@@ -426,6 +429,7 @@ function AdminUsers() {
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive' | 'verified' | 'unverified')}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              style={{ cursor: "pointer" }}
             >
               <option value="all">All Status</option>
               <option value="active">Active</option>
@@ -510,6 +514,7 @@ function AdminUsers() {
                             <button
                               onClick={() => handleViewUser(user.id)}
                               className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                              style={{ cursor: "pointer" }}
                               title="View User"
                             >
                               <FiEye className="text-sm" />
@@ -518,6 +523,7 @@ function AdminUsers() {
                               onClick={() => handleDeleteClick(user)}
                               className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                               title="Delete User"
+                              style={{ cursor: "pointer" }}
                             >
                               <FiTrash2 className="w-4 h-4" />
                             </button>
@@ -526,7 +532,8 @@ function AdminUsers() {
                               onChange={(e) => handleUpdateRole(user.id, e.target.value as 'customer' | 'supplier' | 'manager' | 'admin')}
                               className="text-xs px-2 py-1 border border-gray-300 rounded"
                               title="Change Role"
-                            >
+                              style={{ cursor: "pointer" }}
+                              >
                               <option value="customer">Customer</option>
                               <option value="supplier">Supplier</option>
                               <option value="manager">Manager</option>

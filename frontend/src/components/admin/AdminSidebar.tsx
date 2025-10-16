@@ -127,6 +127,7 @@ export default function AdminSidebar({ isOpen = false, onClose }: { isOpen?: boo
             <button
               onClick={handleLogout}
               className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-red-400 hover:bg-red-900/30 hover:text-red-300 transition-colors duration-300"
+              style={{ cursor: "pointer" }}
             >
               <FiLogOut className="text-lg" />
               <span>Logout</span>

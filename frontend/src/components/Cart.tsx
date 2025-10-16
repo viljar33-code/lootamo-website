@@ -213,15 +213,17 @@ export default function Cart() {
 
   return (
     <div className="pt-12 pb-6 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Left Column - Cart Items */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="lg:col-span-2 space-y-3 sm:space-y-4">
             {/* Header */}
-            <div className="bg-white rounded-lg p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h1 className="text-2xl font-bold text-gray-900">Your cart</h1>
-                <div className="flex items-center gap-3">
+            <div className="bg-white rounded-lg p-3 sm:p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Your cart</h1>
+                
+                {/* Desktop Actions */}
+                <div className="hidden sm:flex items-center gap-3">
                   {selectedItems.size > 0 && (
                     <button
                       onClick={handleDeleteSelected}
@@ -235,9 +237,33 @@ export default function Cart() {
                   <button
                     onClick={handleClearCart}
                     className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
+                    style={{ cursor: "pointer" }} 
                     disabled={loading || cartItems.length === 0}
                   >
                     <FaTrashAlt size={14} />
+                    Clear All
+                  </button>
+                </div>
+
+                {/* Mobile Actions */}
+                <div className="flex sm:hidden items-center gap-2">
+                  {selectedItems.size > 0 && (
+                    <button
+                      onClick={handleDeleteSelected}
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                      disabled={loading}
+                    >
+                      <FaTrash size={12} />
+                      Delete ({selectedItems.size})
+                    </button>
+                  )}
+                  <button
+                    onClick={handleClearCart}
+                    className="flex items-center justify-center gap-2 px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
+                    style={{ cursor: "pointer" }} 
+                    disabled={loading || cartItems.length === 0}
+                  >
+                    <FaTrashAlt size={12} />
                     Clear All
                   </button>
                 </div>
@@ -282,14 +308,14 @@ export default function Cart() {
                 </div>
               )}
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <FaInfoCircle className="text-blue-500" />
-                  <span>Complete the order - adding items to the cart does not mean booking.</span>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
+                  <FaInfoCircle className="text-blue-500 flex-shrink-0" />
+                  <span className="line-clamp-2 sm:line-clamp-1">Complete the order - adding items to the cart does not mean booking.</span>
                 </div>
                 
                 {cartItems.length > 0 && (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 self-start sm:self-auto">
                     <input
                       type="checkbox"
                       id="select-all"
@@ -323,10 +349,98 @@ export default function Cart() {
               </div>
             ) : (
               filteredCartItems.map((item) => (
-              <div key={item.id} className={`bg-white rounded-lg p-4 border transition-colors ${
+              <div key={item.id} className={`bg-white rounded-lg p-3 sm:p-4 border transition-colors ${
                 selectedItems.has(item.product_id) ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
               }`}>
-                <div className="flex flex-wrap gap-4">
+                {/* Mobile Layout */}
+                <div className="block sm:hidden">
+                  <div className="flex items-start gap-3 mb-3">
+                    {/* Selection Checkbox */}
+                    <div className="flex-shrink-0 pt-1">
+                      <input
+                        type="checkbox"
+                        id={`select-${item.id}`}
+                        checked={selectedItems.has(item.product_id)}
+                        onChange={() => handleSelectItem(item.product_id)}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        disabled={loading}
+                      />
+                    </div>
+                    
+                    {/* Product Image */}
+                    <div className="flex-shrink-0">
+                      <Image
+                        src={item.product.cover_image || item.product.small_image || item.product.thumbnail || '/images/placeholder.jpg'}
+                        alt={item.product.name}
+                        width={60}
+                        height={60}
+                        className="rounded-lg object-cover"
+                      />
+                    </div>
+                    
+                    {/* Product Info */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-900 mb-1 text-sm line-clamp-2">{item.product.name}</h3>
+                      
+                      <div className="text-xs text-gray-600 mb-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span>{item.product.platform || 'Steam'}</span>
+                          <span>•</span>
+                          <span>{item.product.region || 'GLOBAL'}</span>
+                        </div>
+                        <div className="mt-1">
+                          <span>From {item.product.publisher || 'G2A'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Mobile Controls */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center border border-gray-300 rounded">
+                        <button
+                          onClick={() => handleQuantityChange(item.product_id, item.quantity - 1)}
+                          className="px-2 py-1 hover:bg-gray-100 text-sm"
+                          disabled={item.quantity <= 1 || loading}
+                        >
+                          -
+                        </button>
+                        <span className="px-2 py-1 border-l border-r border-gray-300 text-sm">
+                          {item.quantity}
+                        </span>
+                        <button
+                          onClick={() => handleQuantityChange(item.product_id, item.quantity + 1)}
+                          className="px-2 py-1 hover:bg-gray-100 text-sm"
+                          disabled={loading}
+                        >
+                          +
+                        </button>
+                      </div>
+                      
+                      <button
+                        onClick={() => handleRemoveItem(item.product_id)}
+                        className="text-red-500 hover:text-red-700 p-1"
+                        style={{ cursor: "pointer" }}
+                        disabled={loading}
+                      >
+                        <FaTrash size={14} />
+                      </button>
+                    </div>
+                    
+                    <div className="text-right">
+                      <div className="text-base font-bold text-gray-900">
+                        €{(item.product.min_price * item.quantity).toFixed(2)}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        €{item.product.min_price.toFixed(2)} each
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Desktop Layout */}
+                <div className="hidden sm:flex gap-4">
                   {/* Selection Checkbox */}
                   <div className="flex-shrink-0 flex items-start pt-2">
                     <input
@@ -399,6 +513,7 @@ export default function Cart() {
                       <button
                         onClick={() => handleRemoveItem(item.product_id)}
                         className="text-red-500 hover:text-red-700 p-1"
+                        style={{ cursor: "pointer" }}
                         disabled={loading}
                       >
                         <FaTrash size={14} />
@@ -424,11 +539,11 @@ export default function Cart() {
                     <div className="mb-2">
                       <div className="flex items-baseline justify-end gap-2">
                         <span className="text-xl font-bold text-gray-900">
-                          ${(item.product.min_price * item.quantity).toFixed(2)}
+                          €{(item.product.min_price * item.quantity).toFixed(2)}
                         </span>
                         {item.product.retail_min_price && item.product.retail_min_price > item.product.min_price && (
                           <span className="text-sm text-gray-500 line-through">
-                            ${(item.product.retail_min_price * item.quantity).toFixed(2)}
+                            €{(item.product.retail_min_price * item.quantity).toFixed(2)}
                           </span>
                         )}
                       </div>
@@ -463,15 +578,15 @@ export default function Cart() {
           </div>
 
           {/* Right Column - Order Summary */}
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {/* G2A Plus Section */}
-            <div className="bg-gradient-to-r from-purple-100 to-purple-200 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-3">
+            <div className="bg-gradient-to-r from-purple-100 to-purple-200 rounded-lg p-3 sm:p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-2">
                 <div>
-                  <h3 className="font-bold text-purple-900">Join Plus Premium</h3>
-                  <p className="text-sm text-purple-700">Save $ 2.67 instantly and enjoy:</p>
+                  <h3 className="font-bold text-purple-900 text-sm sm:text-base">Join Plus Premium</h3>
+                  <p className="text-xs sm:text-sm text-purple-700">Save € 2.67 instantly and enjoy:</p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
+                <label className="relative inline-flex items-center cursor-pointer self-start sm:self-auto">
                   <input
                     type="checkbox"
                     checked={isPlusEnabled}
@@ -482,7 +597,7 @@ export default function Cart() {
                 </label>
               </div>
               
-              <div className="space-y-1 text-sm text-purple-700">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs sm:text-sm text-purple-700">
                 <div className="flex items-center gap-2">
                   <span className="text-green-600">✓</span>
                   <span>Better prices</span>
@@ -503,34 +618,35 @@ export default function Cart() {
             </div>
 
             {/* Order Total */}
-            <div className="bg-white rounded-lg p-4 border border-gray-300">
-              <div className="space-y-3 mb-4">
-                <div className="flex justify-between text-sm">
-                  <span>Subtotal ({summary?.totalItems || cartItems.length} items{searchQuery ? `, ${filteredCartItems.length} shown` : ''})</span>
-                  <span>${subtotal.toFixed(2)}</span>
+            <div className="bg-white rounded-lg p-3 sm:p-4 border border-gray-300">
+              <div className="space-y-2 sm:space-y-3 mb-4">
+                <div className="flex justify-between text-xs sm:text-sm">
+                  <span className="text-gray-600">Subtotal ({summary?.totalItems || cartItems.length} items{searchQuery ? `, ${filteredCartItems.length} shown` : ''})</span>
+                  <span className="font-medium">€{subtotal.toFixed(2)}</span>
                 </div>
                 {isPlusEnabled && (
-                  <div className="flex justify-between text-sm text-green-600">
+                  <div className="flex justify-between text-xs sm:text-sm text-green-600">
                     <span>Plus Premium Discount</span>
-                    <span>-${plusDiscount.toFixed(2)}</span>
+                    <span>-€{plusDiscount.toFixed(2)}</span>
                   </div>
                 )}
                 <hr className="border-gray-200" />
-                <div className="flex justify-between text-lg font-bold">
+                <div className="flex justify-between text-base sm:text-lg font-bold">
                   <span>Cart total</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>€{total.toFixed(2)}</span>
                 </div>
               </div>
 
               <button 
                 onClick={handleCheckout}
                 disabled={cartItems.length === 0 || isCheckingOut}
-                className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors mb-4 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors mb-3 sm:mb-4 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm sm:text-base"
+                style={{ cursor: "pointer" }}
               >
                 {isCheckingOut ? 'Processing...' : 'Checkout'}
               </button>
 
-              <button className="w-full text-blue-600 py-2 text-sm hover:underline">
+              <button className="w-full text-blue-600 py-2 text-xs sm:text-sm hover:underline">
                 Add a discount code
               </button>
             </div>

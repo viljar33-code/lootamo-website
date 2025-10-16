@@ -3,6 +3,7 @@ import Head from "next/head";
 import { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa6";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/router";
 
@@ -15,6 +16,8 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [phone, setPhone] = useState("");
   const [agree, setAgree] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -191,26 +194,52 @@ export default function Register() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Password</label>
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-gray-300 focus:ring-2 focus:ring-gray-200"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 pr-10 text-sm outline-none focus:border-gray-300 focus:ring-2 focus:ring-gray-200"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                    >
+                      {showPassword ? (
+                        <FiEyeOff className="h-4 w-4" />
+                      ) : (
+                        <FiEye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Confirm password</label>
-                  <input
-                    type="password"
-                    required
-                    value={confirm}
-                    onChange={(e) => setConfirm(e.target.value)}
-                    placeholder="••••••••"
-                    className="mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-gray-300 focus:ring-2 focus:ring-gray-200"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      required
+                      value={confirm}
+                      onChange={(e) => setConfirm(e.target.value)}
+                      placeholder="••••••••"
+                      className="mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 pr-10 text-sm outline-none focus:border-gray-300 focus:ring-2 focus:ring-gray-200"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                    >
+                      {showConfirmPassword ? (
+                        <FiEyeOff className="h-4 w-4" />
+                      ) : (
+                        <FiEye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <label className="flex items-center gap-2 text-xs text-gray-600 text-nowrap flex-wrap">

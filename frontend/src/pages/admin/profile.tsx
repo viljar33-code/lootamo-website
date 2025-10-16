@@ -2,6 +2,8 @@ import Head from "next/head";
 import { useEffect, useState, useCallback } from "react";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminHeader from "@/components/admin/AdminHeader";
+import ChangePasswordModal from "@/components/admin/ChangePasswordModal";
+import EditProfileModal from "@/components/admin/EditProfileModal";
 import { FiUser, FiMail, FiPhone, FiEdit2, FiLogOut, FiShield, FiBell, FiKey, FiActivity, FiCalendar, FiCheckCircle } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
 import { ProductService } from "@/services/productService";
@@ -48,6 +50,8 @@ export default function AdminProfile() {
   const [completedOrders, setCompletedOrders] = useState<number>(0);
   const [pendingOrders, setPendingOrders] = useState<number>(0);
   const [ordersLoading, setOrdersLoading] = useState(true);
+  const [changePasswordModalOpen, setChangePasswordModalOpen] = useState(false);
+  const [editProfileModalOpen, setEditProfileModalOpen] = useState(false);
 
   const fetchUserProfile = useCallback(async () => {
     if (!api) return;
@@ -127,6 +131,10 @@ export default function AdminProfile() {
     }
   };
 
+  const handleProfileUpdate = (updatedUser: UserProfile) => {
+    setUser(updatedUser);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -177,7 +185,11 @@ export default function AdminProfile() {
                     </p>
                   </div>
                   <div className="flex gap-3">
-                    <button className="flex items-center gap-2 px-4 py-3 text-sm bg-white/10 backdrop-blur-sm text-white rounded-xl hover:bg-white/20 transition-all duration-200 border border-white/20">
+                    <button   
+                      onClick={() => setEditProfileModalOpen(true)}
+                      className="flex items-center gap-2 px-4 py-3 text-sm bg-white/10 backdrop-blur-sm text-white rounded-xl hover:bg-white/20 transition-all duration-200 border border-white/20"
+                      style={{ cursor: 'pointer' }}
+                    >
                       <FiEdit2 className="text-lg" />
                       Edit Profile
                     </button>                 
@@ -417,7 +429,11 @@ export default function AdminProfile() {
                             <div className="font-semibold text-gray-900">Password Security</div>
                             <div className="text-sm text-gray-600 mt-1">Last updated: recently</div>
                           </div>
-                          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+                          <button 
+                            onClick={() => setChangePasswordModalOpen(true)}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                            style={{ cursor: 'pointer' }}
+                          >
                             Change
                           </button>
                         </div>
@@ -450,7 +466,8 @@ export default function AdminProfile() {
                           <div className="font-semibold text-red-900">Logout from all devices</div>
                           <button
                           onClick={handleLogout}
-                           className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium">
+                           className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                           style={{ cursor: 'pointer' }}>
                             <FiLogOut />
                             Logout
                           </button>
@@ -518,6 +535,20 @@ export default function AdminProfile() {
           </main>
         </div>
       </div>
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        isOpen={changePasswordModalOpen}
+        onClose={() => setChangePasswordModalOpen(false)}
+      />
+
+      {/* Edit Profile Modal */}
+      <EditProfileModal
+        isOpen={editProfileModalOpen}
+        onClose={() => setEditProfileModalOpen(false)}
+        user={user}
+        onProfileUpdate={handleProfileUpdate}
+      />
     </>
   );
 }

@@ -58,14 +58,20 @@ class Settings(BaseSettings):
     # Frontend URL
     FRONTEND_URL: str = Field(default="http://localhost:3000", env="FRONTEND_URL")
     
-    # SMTP Configuration
-    SMTP_HOST: str = Field(default="smtp.gmail.com", env="SMTP_HOST")
-    SMTP_PORT: int = Field(default=587, env="SMTP_PORT")
-    SMTP_USERNAME: str = Field(default="", env="SMTP_USERNAME")
-    SMTP_PASSWORD: str = Field(default="", env="SMTP_PASSWORD")
-    SMTP_FROM_EMAIL: str = Field(default="", env="SMTP_FROM_EMAIL")
-    SMTP_FROM_NAME: str = Field(default="Lootamo E-commerce", env="SMTP_FROM_NAME")
-    SMTP_USE_TLS: bool = Field(default=True, env="SMTP_USE_TLS")
+    # SMTP Configuration (COMMENTED OUT - USING SENDGRID)
+    # SMTP_HOST: str = Field(default="smtp.gmail.com", env="SMTP_HOST")
+    # SMTP_PORT: int = Field(default=587, env="SMTP_PORT")
+    # SMTP_USERNAME: str = Field(default="", env="SMTP_USERNAME")
+    # SMTP_PASSWORD: str = Field(default="", env="SMTP_PASSWORD")
+    # SMTP_FROM_EMAIL: str = Field(default="", env="SMTP_FROM_EMAIL")
+    # SMTP_FROM_NAME: str = Field(default="Lootamo E-commerce", env="SMTP_FROM_NAME")
+    # SMTP_USE_TLS: bool = Field(default=True, env="SMTP_USE_TLS")
+    
+    # SendGrid Configuration
+    SENDGRID_API_KEY: str = Field(default="", env="SENDGRID_API_KEY")
+    EMAIL_FROM: str = Field(default="no-reply@lootamo.com", env="EMAIL_FROM")
+    EMAIL_FROM_NAME: str = Field(default="Lootamo", env="EMAIL_FROM_NAME")
+    EMAIL_REPLY_TO: str = Field(default="info@lootamo.com", env="EMAIL_REPLY_TO")
     
     # Application URLs
     BACKEND_URL: str = Field(default="http://localhost:8000", env="BACKEND_URL")

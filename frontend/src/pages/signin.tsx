@@ -1,8 +1,9 @@
-import Link from "next/link";
+  import Link from "next/link";
 import Head from "next/head";
 import { useEffect, useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa6";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import { useRouter } from "next/router";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ToastProvider";
@@ -12,6 +13,7 @@ export default function Signin() {
   const { showToast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
@@ -146,14 +148,27 @@ export default function Signin() {
                     <label className="block text-sm font-medium text-gray-700">Password</label>
                     <Link href="/forgot" className="text-xs text-gray-600 hover:text-gray-900">Forgot?</Link>
                   </div>
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm outline-none ring-offset-0 focus:border-gray-300 focus:ring-2 focus:ring-gray-200"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 pr-10 text-sm outline-none ring-offset-0 focus:border-gray-300 focus:ring-2 focus:ring-gray-200"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                    >
+                      {showPassword ? (
+                        <FiEyeOff className="h-4 w-4" />
+                      ) : (
+                        <FiEye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 {error && (

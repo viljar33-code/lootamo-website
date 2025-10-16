@@ -110,12 +110,12 @@ export default function WishList() {
                     <h1 className="text-3xl font-extrabold text-gray-900 mb-2">
                         Wishlist
                     </h1>
-                    <div className="flex items-center justify-between">
-                        <p className="text-gray-600">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <p className="text-gray-600 text-sm sm:text-base">
                             {summary ? `${summary.total_items} ${summary.total_items === 1 ? 'item' : 'items'} in your wishlist` : 
                              `${wishlistData.length} ${wishlistData.length === 1 ? 'item' : 'items'} in your wishlist`}
                             {summary && summary.total_estimated_value > 0 && (
-                                <span className="ml-2 text-green-600 font-semibold">
+                                <span className="block sm:inline sm:ml-2 text-green-600 font-semibold">
                                     (Total: ${summary.total_estimated_value.toFixed(2)})
                                 </span>
                             )}
@@ -123,13 +123,13 @@ export default function WishList() {
                         
                         {/* Search Bar */}
                         {wishlistData.length > 0 && (
-                            <div className="relative">
+                            <div className="relative w-full sm:w-auto">
                                 <input
                                     type="text"
                                     placeholder="Search wishlist..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full sm:w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                                 />
                                 <svg className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -213,26 +213,28 @@ export default function WishList() {
 
                 {/* Bulk Actions */}
                 {!loading && wishlistData.length > 0 && (
-                    <div className="mt-8 flex flex-wrap gap-4">
-                        <button 
+                    <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4">
+                        <button
+                            style={{ cursor: "pointer" }}
                             onClick={handleAddAllToCart}
                             disabled={itemsNotInCartCount === 0}
-                            className={`px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2 ${
+                            className={`w-full sm:w-auto px-4 sm:px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 text-sm sm:text-base ${
                                 itemsNotInCartCount === 0 
                                     ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
                                     : 'bg-blue-600 hover:bg-blue-700 text-white'
                             }`}
                         >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 11-4 0v-6m4 0V9a2 2 0 10-4 0v4.01" />
                             </svg>
-                            Add All to Cart ({itemsNotInCartCount})
+                            <span className="truncate">Add All to Cart ({itemsNotInCartCount})</span>
                         </button>
-                        <button 
+                        <button
+                            style={{ cursor: "pointer" }}
                             onClick={handleClearWishlist}
-                            className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2"
+                            className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white px-4 sm:px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
                         >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
                             Clear Wishlist

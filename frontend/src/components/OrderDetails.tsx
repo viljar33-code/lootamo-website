@@ -177,6 +177,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId }) => {
           <button
             onClick={() => router.back()}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+
           >
             Go Back
           </button>
@@ -189,23 +190,27 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId }) => {
     <div className="min-h-screen bg-gray-50">
       {/* Header - Hidden in print */}
       <div className="bg-blue-50 border-b border-gray-200 print:hidden">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="flex items-center justify-between py-3 sm:py-4 min-h-[60px] sm:h-16">
+            <div className="flex items-center flex-1 min-w-0">
               <button
                 onClick={() => router.back()}
-                className="mr-4 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="mr-2 sm:mr-4 p-2 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
+                style={{ cursor: "pointer" }}
               >
                 <ArrowLeftIcon className="h-5 w-5 text-gray-600" />
               </button>
-              <h1 className="text-xl font-semibold text-gray-900">
+              <h1 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">
                 Order #{order.id}
               </h1>
             </div>
-            <div className="flex space-x-3">
+            
+            {/* Desktop Actions */}
+            <div className="hidden sm:flex space-x-3 flex-shrink-0">
               <button
                 onClick={handlePrint}
                 className="flex items-center px-4 py-2 text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
+                style={{ cursor: "pointer" }}
               >
                 <PrinterIcon className="h-4 w-4 mr-2" />
                 Print
@@ -214,9 +219,31 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId }) => {
                 onClick={handleDownloadPDF}
                 disabled={downloadingPDF}
                 className="flex items-center px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 text-sm font-medium"
+                style={{ cursor: "pointer" }}
               >
                 <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
                 {downloadingPDF ? 'Downloading...' : 'Download PDF'}
+              </button>
+            </div>
+
+            {/* Mobile Actions */}
+            <div className="flex sm:hidden space-x-2 flex-shrink-0">
+              <button
+                onClick={handlePrint}
+                className="p-2 text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
+                style={{ cursor: "pointer" }}
+                title="Print"
+              >
+                <PrinterIcon className="h-4 w-4" />
+              </button>
+              <button
+                onClick={handleDownloadPDF}
+                disabled={downloadingPDF}
+                className="p-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                style={{ cursor: "pointer" }}
+                title={downloadingPDF ? 'Downloading...' : 'Download PDF'}
+              >
+                <DocumentArrowDownIcon className="h-4 w-4" />
               </button>
             </div>
           </div>
@@ -224,14 +251,14 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId }) => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4" ref={printRef}>
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-8 py-3 sm:py-4" ref={printRef}>
         {/* Order Summary */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 mb-6 overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-100">
-            <h2 className="text-xl font-bold text-gray-900">Order Summary</h2>
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl border border-gray-100 mb-4 sm:mb-6 overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900">Order Summary</h2>
           </div>
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 sm:p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <div className="text-center p-3 bg-gray-50 rounded-xl">
                 <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">Order ID</label>
                 <p className="text-xl font-bold text-gray-900">#{order.id}</p>
@@ -281,48 +308,76 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId }) => {
         </div>
 
         {/* Order Items */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 mb-6 overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-100">
-            <h2 className="text-xl font-bold text-gray-900">Order Items</h2>
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl border border-gray-100 mb-4 sm:mb-6 overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900">Order Items</h2>
           </div>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {order.order_items && order.order_items.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {order.order_items.map((item, index) => {
                   const product = productDetails[item.product_id];
                   return (
-                    <div key={item.id} className="flex items-center space-x-4 p-4 bg-gray-50 border-2 border-gray-100 rounded-xl hover:border-blue-200 transition-all duration-200">
-                      {product?.thumbnail ? (
-                        <img
-                          src={product.thumbnail}
-                          alt={product.name}
-                          className="w-16 h-16 object-cover rounded-lg shadow-md"
-                        />
-                      ) : (
-                        <div className="w-16 h-16 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex items-center justify-center">
-                          <span className="text-gray-500 text-xs font-medium">No Image</span>
-                        </div>
-                      )}
-                      <div className="flex-1">
-                        <h3 className="text-lg font-bold text-gray-900 mb-1">
-                          {product?.name || `Product ${item.product_id}`}
-                        </h3>
-                        {product?.developer && (
-                          <p className="text-sm text-gray-600 mb-2">by {product.developer}</p>
+                    <div key={item.id} className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 p-3 sm:p-4 bg-gray-50 border-2 border-gray-100 rounded-xl hover:border-blue-200 transition-all duration-200">
+                      {/* Mobile Layout */}
+                      <div className="flex items-start space-x-3 sm:hidden">
+                        {product?.thumbnail ? (
+                          <img
+                            src={product.thumbnail}
+                            alt={product.name}
+                            className="w-12 h-12 object-cover rounded-lg shadow-md flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <span className="text-gray-500 text-xs font-medium">No Image</span>
+                          </div>
                         )}
-                        <div className="flex items-center space-x-4">
-                          <div className="bg-white px-2 py-1 rounded border">
-                            <span className="text-xs font-semibold text-gray-500">Qty: </span>
-                            <span className="text-xs font-bold text-gray-900">{item.quantity}</span>
-                          </div>
-                          <div className="bg-white px-2 py-1 rounded border">
-                            <span className="text-sm font-bold text-gray-900">€{item.price.toFixed(2)}</span>
-                          </div>
-                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${item.status === 'complete' ? 'bg-green-100 text-green-800' : item.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>
-                            {getStatusIcon(item.status)}
-                            <span className="ml-1">{orderService.formatOrderStatus(item.status)}</span>
-                          </span>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-base font-bold text-gray-900 mb-1 line-clamp-2">
+                            {product?.name || `Product ${item.product_id}`}
+                          </h3>
+                          {product?.developer && (
+                            <p className="text-sm text-gray-600 mb-2">by {product.developer}</p>
+                          )}
                         </div>
+                      </div>
+
+                      {/* Desktop Layout */}
+                      <div className="hidden sm:flex sm:items-center sm:space-x-4">
+                        {product?.thumbnail ? (
+                          <img
+                            src={product.thumbnail}
+                            alt={product.name}
+                            className="w-16 h-16 object-cover rounded-lg shadow-md flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="w-16 h-16 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <span className="text-gray-500 text-xs font-medium">No Image</span>
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <h3 className="text-lg font-bold text-gray-900 mb-1">
+                            {product?.name || `Product ${item.product_id}`}
+                          </h3>
+                          {product?.developer && (
+                            <p className="text-sm text-gray-600 mb-2">by {product.developer}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Item Details */}
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+                        <div className="bg-white px-2 py-1 rounded border">
+                          <span className="text-xs font-semibold text-gray-500">Qty: </span>
+                          <span className="text-xs font-bold text-gray-900">{item.quantity}</span>
+                        </div>
+                        <div className="bg-white px-2 py-1 rounded border">
+                          <span className="text-sm font-bold text-gray-900">€{item.price.toFixed(2)}</span>
+                        </div>
+                        <span className={`inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs font-bold ${item.status === 'complete' ? 'bg-green-100 text-green-800' : item.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>
+                          {getStatusIcon(item.status)}
+                          <span className="ml-1">{orderService.formatOrderStatus(item.status)}</span>
+                        </span>
                       </div>
                     </div>
                   );
@@ -372,22 +427,22 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId }) => {
 
         {/* License Keys Section */}
         {(order.payment_status === 'paid' || order.status === 'complete') && (
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900">License Keys</h2>
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl border border-gray-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900">License Keys</h2>
               {licenseKeysLoading && (
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-600"></div>
               )}
             </div>
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               {licenseKeys ? (
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {licenseKeys.license_keys.length > 0 ? (
                     <>
-                      <div className="mb-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl">
+                      <div className="mb-3 sm:mb-4 p-3 sm:p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl">
                         <div className="flex items-center justify-center">
-                          <CheckCircleIcon className="h-6 w-6 text-green-600 mr-2" />
-                          <p className="text-base font-bold text-green-800">
+                          <CheckCircleIcon className="h-5 w-5 sm:h-6 sm:w-6 text-green-600 mr-2" />
+                          <p className="text-sm sm:text-base font-bold text-green-800 text-center">
                             {licenseKeys.completed_items} of {licenseKeys.total_items} license keys ready
                           </p>
                         </div>
@@ -399,23 +454,24 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId }) => {
                         const isVisible = showKeys[keyId];
                         
                         return (
-                          <div key={keyId} className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 border-2 border-gray-200 rounded-xl hover:border-green-300 transition-all duration-200">
-                            <div className="flex items-center justify-between mb-3">
-                              <h3 className="text-lg font-bold text-gray-900">
+                          <div key={keyId} className="p-3 sm:p-4 bg-gradient-to-r from-gray-50 to-gray-100 border-2 border-gray-200 rounded-xl hover:border-green-300 transition-all duration-200">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-2">
+                              <h3 className="text-base sm:text-lg font-bold text-gray-900 line-clamp-2">
                                 {product?.name || `Product ${key.product_id}`}
                               </h3>
-                              <span className="text-xs font-bold text-green-700 bg-green-200 px-3 py-1 rounded-full">
+                              <span className="text-xs font-bold text-green-700 bg-green-200 px-3 py-1 rounded-full self-start sm:self-auto">
                                 Ready
                               </span>
                             </div>
                             
-                            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                            <div className="bg-white p-3 sm:p-4 rounded-xl border border-gray-200 shadow-sm">
                               <div className="flex items-center justify-between mb-3">
-                                <label className="block text-base font-bold text-gray-700">License Key</label>
+                                <label className="block text-sm sm:text-base font-bold text-gray-700">License Key</label>
                                 <div className="flex space-x-2">
                                   <button
                                     onClick={() => toggleKeyVisibility(keyId)}
-                                    className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-all duration-200"
+                                    className="p-1.5 sm:p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-all duration-200"
+                                    style={{ cursor: "pointer" }}
                                     title={isVisible ? 'Hide key' : 'Show key'}
                                   >
                                     {isVisible ? (
@@ -426,20 +482,21 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId }) => {
                                   </button>
                                   <button
                                     onClick={() => copyToClipboard(key.license_key, 'License key')}
-                                    className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-all duration-200"
+                                    className="p-1.5 sm:p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-all duration-200"
+                                    style={{ cursor: "pointer" }}
                                     title="Copy to clipboard"
                                   >
                                     <ClipboardDocumentIcon className="h-4 w-4" />
                                   </button>
                                 </div>
                               </div>
-                              <div className="font-mono text-sm bg-gray-50 p-3 rounded-lg border text-center font-bold">
+                              <div className="font-mono text-xs sm:text-sm bg-gray-50 p-2 sm:p-3 rounded-lg border text-center font-bold break-all">
                                 {isVisible ? key.license_key : '•'.repeat(key.license_key.length)}
                               </div>
                             </div>
                             
                             {key.g2a_order_id && (
-                              <div className="mt-3 text-xs text-gray-600 bg-white px-3 py-2 rounded-lg border">
+                              <div className="mt-3 text-xs text-gray-600 bg-white px-2 sm:px-3 py-2 rounded-lg border">
                                 <span className="font-semibold">G2A Order ID:</span> {key.g2a_order_id}
                               </div>
                             )}

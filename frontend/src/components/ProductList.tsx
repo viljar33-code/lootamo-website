@@ -157,6 +157,7 @@ const ProductList: React.FC<ProductListProps> = ({
             onClick={handleLoadMore}
             disabled={loading}
             className="bg-blue-600 text-white px-8 py-3 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+            style={{ cursor: "pointer" }}
           >
             {loading ? (
               <span className="flex items-center">

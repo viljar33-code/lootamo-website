@@ -109,6 +109,7 @@ export default function AdminScheduler() {
                     onClick={fetchSchedulerData}
                     disabled={loading}
                     className="flex items-center gap-2 px-4 py-3 text-sm bg-white/10 backdrop-blur-sm text-white rounded-xl hover:bg-white/20 transition-all duration-200 border border-white/20"
+                    style={{ cursor: "pointer" }}
                   >
                     <FiRefreshCw className={`text-lg ${loading ? 'animate-spin' : ''}`} />
                     {loading ? 'Refreshing...' : 'Refresh'}
@@ -117,6 +118,7 @@ export default function AdminScheduler() {
                     onClick={handleManualSync}
                     disabled={syncing}
                     className="flex items-center gap-2 px-4 py-3 text-sm bg-white/10 backdrop-blur-sm text-white rounded-xl hover:bg-white/20 transition-all duration-200 border border-white/20"
+                    style={{ cursor: "pointer" }}
                   >
                     <FiZap className={`text-lg ${syncing ? 'animate-spin' : ''}`} />
                     {syncing ? 'Syncing...' : 'Quick Sync'}
@@ -229,6 +231,7 @@ export default function AdminScheduler() {
                 <button
                   onClick={handleManualSync}
                   disabled={syncing}
+                  style={{ cursor: "pointer" }}
                   className={`px-6 py-3 rounded-xl text-white font-medium transition-all duration-200 ${
                     syncing
                       ? "bg-gray-400 cursor-not-allowed"
@@ -294,6 +297,7 @@ export default function AdminScheduler() {
                           value={syncHour}
                           onChange={(e) => setSyncHour(parseInt(e.target.value))}
                           className="px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white font-medium text-gray-900 transition-all duration-200"
+                          style={{ cursor: "pointer" }}
                         >
                           {Array.from({ length: 24 }, (_, i) => (
                             <option key={i} value={i}>
@@ -308,6 +312,7 @@ export default function AdminScheduler() {
                           value={syncMinute}
                           onChange={(e) => setSyncMinute(parseInt(e.target.value))}
                           className="px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white font-medium text-gray-900 transition-all duration-200"
+                          style={{ cursor: "pointer" }}
                         >
                           {[0, 15, 30, 45].map((minute) => (
                             <option key={minute} value={minute}>
@@ -341,6 +346,7 @@ export default function AdminScheduler() {
                     <button
                       onClick={handleUpdateSchedule}
                       className="w-full px-6 py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-xl hover:from-indigo-600 hover:to-indigo-700 font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
+                      style={{ cursor: "pointer" }}
                     >
                       <div className="flex items-center justify-center gap-2">
                         <FiCheckCircle className="text-lg" />

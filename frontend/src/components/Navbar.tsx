@@ -88,7 +88,7 @@ export default function Navbar() {
             </div>
 
             <nav className="mt-4 flex flex-col gap-3">
-              <Link href="/products" className="block px-3 py-2 rounded-md">All Products12</Link>
+              <Link href="/products" className="block px-3 py-2 rounded-md">All Products</Link>
               <Link href="/deals" className="block px-3 py-2 rounded-md">Deals</Link>
               <Link href="/categories" className="block px-3 py-2 rounded-md">Categories</Link>
               <Link href="/giftcards" className="block px-3 py-2 rounded-md">Gift Cards</Link>

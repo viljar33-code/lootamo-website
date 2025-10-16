@@ -194,6 +194,7 @@ export default function AdminProducts() {
                   onClick={handleRefresh}
                   disabled={refreshing}
                   className="flex items-center gap-2 px-4 py-3 text-sm bg-white/10 backdrop-blur-sm text-white rounded-xl hover:bg-white/20 disabled:opacity-50 transition-all duration-200 border border-white/20"                 
+                  style={{ cursor: "pointer" }}
                 >
                   <FiRefreshCw className={`text-sm ${refreshing ? 'animate-spin' : ''}`} />
                   {refreshing ? 'Refreshing...' : 'Refresh'}
@@ -269,6 +270,7 @@ export default function AdminProducts() {
                 type="button"
                 onClick={toggleFilters}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-semibold"
+                style={{ cursor: "pointer" }}
               >
                 <FiFilter className="text-sm" />
                 {showFilters ? 'Hide Filters' : 'Show Filters'}
@@ -317,6 +319,7 @@ export default function AdminProducts() {
                   type="button"
                   onClick={resetFilters}
                   className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:shadow-md transition-all duration-200 font-semibold"
+                  style={{ cursor: "pointer" }}
                 >
                   Reset
                 </button>
@@ -444,6 +447,7 @@ export default function AdminProducts() {
                               onClick={() => window.open(`/admin/products/${product.id}`, '_blank')}
                               className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors duration-200"
                               title="View Product"
+                              style={{ cursor: "pointer" }}
                             >
                               <FiEye className="text-sm" />
                             </button>
