@@ -1,8 +1,7 @@
 import Head from "next/head";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import AdminSidebar from "@/components/admin/AdminSidebar";
-import AdminHeader from "@/components/admin/AdminHeader";
+import AdminLayout from "@/components/layouts/AdminLayout";
 import { useAuth } from '@/contexts/AuthContext';
 import { AdminService, RetryLog, RetryStats, ErrorLog, ErrorStats } from '@/services/adminService';
 import { getSyncLogs, convertToBatches, BatchData } from '@/services/syncLogService';
@@ -195,77 +194,76 @@ export default function AdminLogs() {
         <title>Logs & Monitoring • Lootamo Admin</title>
       </Head>
 
-      <div className="min-h-screen bg-gray-100 flex">
-        <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <div className="flex-1 flex flex-col md:ml-72">
-          <AdminHeader onMenuClick={() => setSidebarOpen(true)} />
-
-          <main className="px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <AdminLayout>
+        <div className="space-y-8">
             {/* Header Section */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Logs & Monitoring</h1>
-                <p className="mt-2 text-gray-600">Real-time system monitoring and comprehensive logging dashboard</p>
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+              <div className="mb-4 lg:mb-0">
+                <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Logs & Monitoring</h1>
+                <p className="mt-1 lg:mt-2 text-sm lg:text-base text-gray-600">Real-time system monitoring and comprehensive logging dashboard</p>
               </div>
               
               {/* Auto-refresh controls */}
-              <div className="mt-4 sm:mt-0 flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 lg:gap-4">
+                <div className="flex items-center justify-between sm:justify-start gap-3">
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => setAutoRefresh(!autoRefresh)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                        autoRefresh ? 'bg-blue-600' : 'bg-gray-200'
+                      }`}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          autoRefresh ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                    <span className="text-sm text-gray-600">Auto-refresh</span>
+                  </div>
+                  
                   <button
-                    onClick={() => setAutoRefresh(!autoRefresh)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                      autoRefresh ? 'bg-blue-600' : 'bg-gray-200'
-                    }`}
+                    onClick={async () => {
+                      if (!api) return;
+                      try {
+                        setLoading(true);
+                        const adminService = new AdminService(api);
+                        
+                        const [logsResponse, errorLogsResponse] = await Promise.all([
+                          adminService.getRetryLogs(0, 50),
+                          adminService.getErrorLogs(1, 10)
+                        ]);
+                        
+                        const statsResponse = adminService.calculateRetryStatsFromLogs(logsResponse.retry_logs);
+                        const errorStatsResponse = await adminService.getErrorStats();
+                        
+                        setRetryLogs(logsResponse.retry_logs);
+                        setRetryStats(statsResponse);
+                        setErrorLogs(errorLogsResponse.error_logs);
+                        setErrorStats(errorStatsResponse);
+                        setLastUpdated(new Date());
+                        setError(null);
+                      } catch (err) {
+                        console.error('Failed to refresh data:', err);
+                        setError('Failed to refresh data');
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                    className="px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
                     style={{ cursor: "pointer" }}
                   >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        autoRefresh ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
+                    <span className="hidden sm:inline">Manual Refresh</span>
+                    <span className="sm:hidden">Refresh</span>
                   </button>
-                  <span className="text-sm text-gray-600">Auto-refresh</span>
                 </div>
                 
                 {lastUpdated && (
-                  <div className="text-sm text-gray-500">
+                  <div className="text-xs sm:text-sm text-gray-500 text-center sm:text-left">
                     Last updated: {lastUpdated.toLocaleTimeString()}
                   </div>
                 )}
-                
-                <button
-                  onClick={async () => {
-                    if (!api) return;
-                    try {
-                      setLoading(true);
-                      const adminService = new AdminService(api);
-                      
-                      const [logsResponse, errorLogsResponse] = await Promise.all([
-                        adminService.getRetryLogs(0, 50),
-                        adminService.getErrorLogs(1, 10)
-                      ]);
-                      
-                      const statsResponse = adminService.calculateRetryStatsFromLogs(logsResponse.retry_logs);
-                      const errorStatsResponse = await adminService.getErrorStats();
-                      
-                      setRetryLogs(logsResponse.retry_logs);
-                      setRetryStats(statsResponse);
-                      setErrorLogs(errorLogsResponse.error_logs);
-                      setErrorStats(errorStatsResponse);
-                      setLastUpdated(new Date());
-                      setError(null);
-                    } catch (err) {
-                      console.error('Failed to refresh data:', err);
-                      setError('Failed to refresh data');
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                  className="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                  style={{ cursor: "pointer" }}
-                >
-                  Manual Refresh
-                </button>
               </div>
             </div>
 
@@ -741,9 +739,8 @@ export default function AdminLogs() {
                 </div>
               </div>
             </section>
-          </main>
         </div>
-      </div>
+      </AdminLayout>
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (

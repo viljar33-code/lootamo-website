@@ -243,78 +243,78 @@ function AdminPayments() {
       <AdminLayout>
         <div className="space-y-6">
           {/* Header Section */}
-          <div className="bg-blue-600 text-white px-6 py-8 rounded-xl">
-            <h1 className="text-2xl font-bold">Payment Processing</h1>
-            <p className="text-blue-100 mt-2">Monitor Stripe payments, webhooks, and transaction status</p>
+          <div className="bg-blue-600 text-white px-4 sm:px-6 py-6 sm:py-8 rounded-xl">
+            <h1 className="text-xl sm:text-2xl font-bold">Payment Processing</h1>
+            <p className="text-blue-100 mt-2 text-sm sm:text-base">Monitor Stripe payments, webhooks, and transaction status</p>
           </div>
 
           {/* Payment Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-6">
-            <div className="bg-gradient-to-br from-green-100 to-green-200 rounded-xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-all duration-300">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 px-4 sm:px-6">
+            <div className="bg-gradient-to-br from-green-100 to-green-200 rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 hover:shadow-xl transition-all duration-300">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-gray-700">Total Revenue</p>
-                  <p className="text-2xl font-bold text-gray-900">€{stats.totalRevenue.toLocaleString()}</p>
+                  <p className="text-xs sm:text-sm font-semibold text-gray-700">Total Revenue</p>
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900">€{stats.totalRevenue.toLocaleString()}</p>
                 </div>
-                <div className="p-3 rounded-lg bg-green-500">
-                  <FiDollarSign className="text-xl text-white" />
+                <div className="p-2 sm:p-3 rounded-lg bg-green-500">
+                  <FiDollarSign className="text-lg sm:text-xl text-white" />
                 </div>
               </div>
-              <div className="mt-4 flex items-center text-sm">
+              <div className="mt-3 sm:mt-4 flex items-center text-xs sm:text-sm">
                 <span className="text-green-700 font-semibold">+€{stats.todayRevenue.toFixed(2)}</span>
                 <span className="text-gray-600 ml-1">today</span>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-all duration-300">
+            <div className="bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 hover:shadow-xl transition-all duration-300">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-gray-700">Successful Payments</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.successfulPayments}</p>
+                  <p className="text-xs sm:text-sm font-semibold text-gray-700">Successful Payments</p>
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.successfulPayments}</p>
                 </div>
-                <div className="p-3 rounded-lg bg-blue-500">
-                  <FiCheck className="text-xl text-white" />
+                <div className="p-2 sm:p-3 rounded-lg bg-blue-500">
+                  <FiCheck className="text-lg sm:text-xl text-white" />
                 </div>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-all duration-300">
+            <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 hover:shadow-xl transition-all duration-300">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-gray-700">Pending Payments</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.pendingPayments}</p>
+                  <p className="text-xs sm:text-sm font-semibold text-gray-700">Pending Payments</p>
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.pendingPayments}</p>
                 </div>
-                <div className="p-3 rounded-lg bg-yellow-500">
-                  <FiClock className="text-xl text-white" />
+                <div className="p-2 sm:p-3 rounded-lg bg-yellow-500">
+                  <FiClock className="text-lg sm:text-xl text-white" />
                 </div>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-red-100 to-red-200 rounded-xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-all duration-300">
+            <div className="bg-gradient-to-br from-red-100 to-red-200 rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 hover:shadow-xl transition-all duration-300">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-gray-700">Failed Payments</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.failedPayments}</p>
+                  <p className="text-xs sm:text-sm font-semibold text-gray-700">Failed Payments</p>
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.failedPayments}</p>
                 </div>
-                <div className="p-3 rounded-lg bg-red-500">
-                  <FiX className="text-xl text-white" />
+                <div className="p-2 sm:p-3 rounded-lg bg-red-500">
+                  <FiX className="text-lg sm:text-xl text-white" />
                 </div>
               </div>
             </div>
           </div>
 
           {/* Payment Filters */}
-          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 mx-6 hover:shadow-xl transition-all duration-300">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 mx-4 sm:mx-6 hover:shadow-xl transition-all duration-300">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-3">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-blue-100 rounded-lg">
                   <FiDollarSign className="text-blue-600 text-lg" />
                 </div>
-                <h2 className="text-xl font-bold text-gray-900">Payment Transactions</h2>
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900">Payment Transactions</h2>
               </div>
               <button
                 onClick={fetchPayments}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 font-semibold"
+                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 font-semibold text-sm sm:text-base"
                 style={{ cursor: "pointer" }}
               >
                 <FiRefreshCw className="text-sm" />
@@ -322,12 +322,12 @@ function AdminPayments() {
               </button>
             </div>
 
-            <div className="flex flex-wrap gap-3 mb-6">
+            <div className="flex flex-wrap gap-2 sm:gap-3 mb-4 sm:mb-6">
               {['all', 'pending', 'paid', 'failed', 'refunded'].map((status) => (
                 <button
                   key={status}
                   onClick={() => setFilter(status as 'all' | 'pending' | 'paid' | 'failed' | 'refunded')}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                  className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 ${
                     filter === status
                       ? 'bg-blue-600 text-white shadow-lg transform -translate-y-0.5'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md'
@@ -339,32 +339,32 @@ function AdminPayments() {
               ))}
             </div>
 
-            {/* Payment Table */}
-            <div className="overflow-x-auto bg-gray-50 rounded-lg border border-gray-200">
+            {/* Payment Table - Desktop */}
+            <div className="hidden md:block overflow-x-auto bg-gray-50 rounded-lg border border-gray-200">
               <table className="w-full">
                 <thead className="bg-gray-100">
                   <tr className="border-b border-gray-200">
-                    <th className="text-left py-4 px-6 font-semibold text-gray-900">#</th>
-                    <th className="text-left py-4 px-6 font-semibold text-gray-900">Order ID</th>
-                    <th className="text-left py-4 px-6 font-semibold text-gray-900">Product</th>
-                    <th className="text-left py-4 px-6 font-semibold text-gray-900">Customer</th>
-                    <th className="text-left py-4 px-6 font-semibold text-gray-900">Amount</th>
-                    <th className="text-left py-4 px-6 font-semibold text-gray-900">Status</th>
-                    <th className="text-left py-4 px-6 font-semibold text-gray-900">License</th>
-                    <th className="text-left py-4 px-6 font-semibold text-gray-900">Date</th>
+                    <th className="text-left py-4 px-6 font-semibold text-gray-900 text-sm">#</th>
+                    <th className="text-left py-4 px-6 font-semibold text-gray-900 text-sm">Order ID</th>
+                    <th className="text-left py-4 px-6 font-semibold text-gray-900 text-sm">Product</th>
+                    <th className="text-left py-4 px-6 font-semibold text-gray-900 text-sm">Customer</th>
+                    <th className="text-left py-4 px-6 font-semibold text-gray-900 text-sm">Amount</th>
+                    <th className="text-left py-4 px-6 font-semibold text-gray-900 text-sm">Status</th>
+                    <th className="text-left py-4 px-6 font-semibold text-gray-900 text-sm">License</th>
+                    <th className="text-left py-4 px-6 font-semibold text-gray-900 text-sm">Date</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white">
                   {loading ? (
                     <tr>
-                      <td colSpan={9} className="text-center py-12">
+                      <td colSpan={8} className="text-center py-12">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
                         <p className="text-gray-500 mt-2">Loading payments...</p>
                       </td>
                     </tr>
                   ) : currentPayments.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="text-center py-12">
+                      <td colSpan={8} className="text-center py-12">
                         <div className="p-3 bg-gray-100 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
                           <FiDollarSign className="text-gray-400 text-lg" />
                         </div>
@@ -426,54 +426,132 @@ function AdminPayments() {
               </table>
             </div>
 
+            {/* Payment Cards - Mobile */}
+            <div className="md:hidden space-y-4">
+              {loading ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="text-gray-500 mt-2">Loading payments...</p>
+                </div>
+              ) : currentPayments.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="p-3 bg-gray-100 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
+                    <FiDollarSign className="text-gray-400 text-lg" />
+                  </div>
+                  <p className="text-gray-500 font-medium">No payments found</p>
+                  <p className="text-gray-400 text-sm mt-1">Payments will appear here once processed</p>
+                </div>
+              ) : (
+                currentPayments.map((payment, index) => (
+                  <div key={payment.id} className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-gray-500">#{startIndex + index + 1}</span>
+                        <span className="font-semibold text-gray-900">#{payment.orderId}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {getStatusIcon(payment.status)}
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusColor(payment.status)}`}>
+                          {payment.status}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-gray-900">{payment.customerName || 'Unknown'}</p>
+                          <p className="text-xs text-gray-500 truncate">{payment.customerEmail}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-gray-900">€{payment.amount}</p>
+                          <p className="text-xs text-gray-500">{payment.currency}</p>
+                        </div>
+                      </div>
+                      
+                      {payment.productName && (
+                        <div>
+                          <p className="text-sm text-gray-900">{payment.productName}</p>
+                          <p className="text-xs text-gray-500">{payment.orderItems || 1} item(s)</p>
+                        </div>
+                      )}
+                      
+                      <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+                        <div className="flex items-center gap-1">
+                          {payment.licenseDelivered ? (
+                            <span className="text-green-600 text-xs font-semibold">✓ Delivered</span>
+                          ) : (
+                            <span className="text-gray-500 text-xs">Pending</span>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {new Date(payment.createdAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex justify-center items-center mt-6 space-x-2">
-                {/* Previous button */}
-                <button
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className={`p-2 rounded-lg transition-colors ${
-                    currentPage === 1
-                      ? 'text-gray-400 cursor-not-allowed'
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  <FiChevronLeft className="w-5 h-5" />
-                </button>
+              <div className="flex flex-col sm:flex-row justify-center items-center mt-4 sm:mt-6 gap-3">
+                <div className="flex items-center space-x-1 sm:space-x-2">
+                  {/* Previous button */}
+                  <button
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className={`p-2 rounded-lg transition-colors ${
+                      currentPage === 1
+                        ? 'text-gray-400 cursor-not-allowed'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <FiChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </button>
 
-                {/* Page numbers */}
-                {getPageNumbers().map((page, index) => (
-                  <React.Fragment key={index}>
-                    {page === '...' ? (
-                      <span className="px-3 py-2 text-gray-500">...</span>
-                    ) : (
-                      <button
-                        onClick={() => setCurrentPage(page as number)}
-                        className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${
-                          currentPage === page
-                            ? 'bg-blue-500 text-white'
-                            : 'text-gray-600 hover:bg-gray-100'
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    )}
-                  </React.Fragment>
-                ))}
+                  {/* Page numbers */}
+                  {getPageNumbers().map((page, index) => (
+                    <React.Fragment key={index}>
+                      {page === '...' ? (
+                        <span className="px-2 sm:px-3 py-2 text-gray-500 text-xs sm:text-sm">...</span>
+                      ) : (
+                        <button
+                          onClick={() => setCurrentPage(page as number)}
+                          className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
+                            currentPage === page
+                              ? 'bg-blue-500 text-white'
+                              : 'text-gray-600 hover:bg-gray-100'
+                          }`}
+                          style={{ cursor: "pointer" }}
+                        >
+                          {page}
+                        </button>
+                      )}
+                    </React.Fragment>
+                  ))}
 
-                {/* Next button */}
-                <button
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
-                  className={`p-2 rounded-lg transition-colors ${
-                    currentPage === totalPages
-                      ? 'text-gray-400 cursor-not-allowed'
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  <FiChevronRight className="w-5 h-5" />
-                </button>
+                  {/* Next button */}
+                  <button
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                    className={`p-2 rounded-lg transition-colors ${
+                      currentPage === totalPages
+                        ? 'text-gray-400 cursor-not-allowed'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <FiChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </button>
+                </div>
+                
+                {/* Page info */}
+                <div className="text-xs sm:text-sm text-gray-600">
+                  Page {currentPage} of {totalPages}
+                </div>
               </div>
             )}
           </div>

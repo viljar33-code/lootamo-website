@@ -422,6 +422,7 @@ export default function ProductDetailPage() {
                   {/* Wishlist and Action Buttons */}
                   <div className="flex gap-3">
                     <button
+                      style={{ cursor: "pointer" }}
                       onClick={() => toggleWishlist(product.id.toString())}
                       className={`p-3 rounded-lg transition-all duration-200 ${
                         isInWishlist(product.id.toString()) 
@@ -446,6 +447,7 @@ export default function ProductDetailPage() {
                     
                     <div className="flex-1 flex gap-2">
                       <button
+                        style={{ cursor: "pointer" }}
                         className={`flex-1 py-3 px-6 rounded-lg font-semibold text-lg transition-all duration-200 ${
                           product.available_to_buy
                             ? 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md active:transform active:scale-95'
@@ -462,6 +464,7 @@ export default function ProductDetailPage() {
                       </button>
                       
                       <button
+                        style={{ cursor: "pointer" }}
                         className={`flex-1 py-3 px-6 rounded-lg font-semibold text-lg transition-all duration-200 ${
                           product.available_to_buy
                             ? 'bg-green-600 text-white hover:bg-green-700 hover:shadow-md active:transform active:scale-95'

@@ -197,6 +197,7 @@ export default function Signin() {
 
               <div className="grid grid-cols-2 gap-3">
                 <button
+                  style={{ cursor: "pointer" }}
                   type="button"
                   onClick={() => {
                     const redirectPath = window.location.pathname;
@@ -213,6 +214,7 @@ export default function Signin() {
                   Google
                 </button>
                 <button
+                  style={{ cursor: "pointer" }}
                   type="button"
                   onClick={() => {
                     const redirectUri = encodeURIComponent(`${window.location.origin}/auth/callback?provider=facebook`);

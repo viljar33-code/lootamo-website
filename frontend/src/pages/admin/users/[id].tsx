@@ -136,6 +136,7 @@ export default function UserDetails() {
                 onClick={handleGoBack}
                 className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                 title="Back to Users"
+                style={{ cursor: "pointer" }}
               >
                 <FiArrowLeft className="w-5 h-5" />
               </button>

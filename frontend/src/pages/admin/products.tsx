@@ -1,6 +1,6 @@
 import Head from "next/head";
 import React, { useState, useEffect } from "react";
-import { FiPackage, FiSearch, FiFilter, FiRefreshCw, FiEye, FiEdit, FiTrash2, FiPlus, FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { FiPackage, FiSearch, FiFilter, FiRefreshCw, FiEye, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import { useAuth } from '@/contexts/AuthContext';
 import { AdminService, ProductSyncStats } from '@/services/adminService';
@@ -304,6 +304,7 @@ export default function AdminProducts() {
               <div className="min-w-32">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
                 <select
+                  style={{ cursor: "pointer" }}
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
@@ -470,7 +471,7 @@ export default function AdminProducts() {
                   className={`p-2 rounded-lg transition-colors ${
                     currentPage === 1
                       ? 'text-gray-400 cursor-not-allowed'
-                      : 'text-gray-600 hover:bg-gray-100'
+                      : 'text-gray-600 hover:bg-gray-100 cursor-pointer'
                   }`}
                 >
                   <FiChevronLeft className="w-5 h-5" />

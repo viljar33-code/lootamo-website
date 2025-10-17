@@ -308,75 +308,75 @@ function AdminUsers() {
         <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">User Management</h1>
-            <p className="text-gray-600 mt-1">Manage customer accounts, roles, and access permissions</p>
+            <p className="text-gray-600 mt-1">  </p>
           </div>
 
           {/* User Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-            <div className="bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl px-6 py-4 border border-blue-200">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-500 rounded-lg">
-                  <FiUsers className="text-lg text-white" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
+            <div className="bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl px-4 sm:px-6 py-3 sm:py-4 border border-blue-200">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 bg-blue-500 rounded-lg">
+                  <FiUsers className="text-sm sm:text-lg text-white" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-700">Total Users</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalUsers}</p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-700">Total Users</p>
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.totalUsers}</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-green-100 to-green-200 rounded-xl px-6 py-4 border border-green-200 min-w-[200px]">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-500 rounded-lg">
-                  <FiShield className="text-lg text-white" />
+            <div className="bg-gradient-to-br from-green-100 to-green-200 rounded-xl px-4 sm:px-6 py-3 sm:py-4 border border-green-200">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 bg-green-500 rounded-lg">
+                  <FiShield className="text-sm sm:text-lg text-white" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-700">Active Users</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.activeUsers}</p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-700">Active Users</p>
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.activeUsers}</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl px-6 py-4 border border-purple-200 min-w-[200px]">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-500 rounded-lg">
-                  <FiMail className="text-lg text-white" />
+            <div className="bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl px-4 sm:px-6 py-3 sm:py-4 border border-purple-200">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 bg-purple-500 rounded-lg">
+                  <FiMail className="text-sm sm:text-lg text-white" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-700">Verified</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.verifiedUsers}</p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-700">Verified</p>
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.verifiedUsers}</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl px-6 py-4 border border-orange-200 min-w-[200px]">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-orange-500 rounded-lg">
-                  <FiShield className="text-lg text-white" />
+            <div className="bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl px-4 sm:px-6 py-3 sm:py-4 border border-orange-200">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 bg-orange-500 rounded-lg">
+                  <FiShield className="text-sm sm:text-lg text-white" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-700">Admins</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.adminUsers}</p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-700">Admins</p>
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.adminUsers}</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-xl px-6 py-4 border border-indigo-200 min-w-[200px]">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-500 rounded-lg">
-                  <FiUserPlus className="text-lg text-white" />
+            <div className="bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-xl px-4 sm:px-6 py-3 sm:py-4 border border-indigo-200">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 bg-indigo-500 rounded-lg">
+                  <FiUserPlus className="text-sm sm:text-lg text-white" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-700">New This Week</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.newUsersThisWeek}</p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-700">New This Week</p>
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.newUsersThisWeek}</p>
                 </div>
               </div>
             </div>
           </div>
 
         {/* User Management */}
-        <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
-          <div className="flex items-center justify-between mb-6">
+        <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-3 sm:gap-0">
             <h2 className="text-xl font-bold text-gray-900">User Management</h2>
             <div className="flex gap-2">
               <button 
@@ -439,8 +439,8 @@ function AdminUsers() {
             </select>
           </div>
 
-          {/* User Table */}
-          <div className="overflow-x-auto">
+          {/* User Table - Desktop */}
+          <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200">
@@ -546,6 +546,79 @@ function AdminUsers() {
                   )}
                 </tbody>
               </table>
+            </div>
+
+            {/* User Cards - Mobile */}
+            <div className="md:hidden space-y-4">
+              {loading ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="text-gray-500 mt-2">Loading users...</p>
+                </div>
+              ) : currentPageUsers.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="p-3 bg-gray-100 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
+                    <FiUsers className="text-gray-400 text-lg" />
+                  </div>
+                  <p className="text-gray-500 font-medium">No users found</p>
+                  <p className="text-gray-400 text-sm mt-1">Users will appear here once registered</p>
+                </div>
+              ) : (
+                currentPageUsers.map((user, index) => (
+                  <div key={user.id} className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-gray-500">#{(currentPage - 1) * itemsPerPage + index + 1}</span>
+                        <span className="font-semibold text-gray-900">{user.first_name} {user.last_name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(user.role)}`}>
+                          {user.role}
+                        </span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(user.is_active, user.is_verified)}`}>
+                          {getStatusText(user.is_active, user.is_verified)}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-sm text-gray-600">@{user.username}</p>
+                        <p className="text-sm text-gray-500 truncate">{user.email}</p>
+                      </div>
+                      
+                      <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+                        <div className="flex gap-4 text-xs text-gray-600">
+                          <span>{user.total_orders ?? 0} orders</span>
+                          <span>€{(user.total_spent ?? 0).toFixed(2)} spent</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleViewUser(user.id)}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            style={{ cursor: "pointer" }}
+                            title="View User"
+                          >
+                            <FiEye className="text-sm" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(user)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete User"
+                            style={{ cursor: "pointer" }}
+                          >
+                            <FiTrash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <div className="text-xs text-gray-500 pt-1">
+                        Last login: {user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
 
             {/* Pagination */}

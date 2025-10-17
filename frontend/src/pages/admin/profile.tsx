@@ -1,7 +1,6 @@
 import Head from "next/head";
 import { useEffect, useState, useCallback } from "react";
-import AdminSidebar from "@/components/admin/AdminSidebar";
-import AdminHeader from "@/components/admin/AdminHeader";
+import AdminLayout from "@/components/layouts/AdminLayout";
 import ChangePasswordModal from "@/components/admin/ChangePasswordModal";
 import EditProfileModal from "@/components/admin/EditProfileModal";
 import { FiUser, FiMail, FiPhone, FiEdit2, FiLogOut, FiShield, FiBell, FiKey, FiActivity, FiCalendar, FiCheckCircle } from "react-icons/fi";
@@ -41,7 +40,6 @@ interface Order {
 
 export default function AdminProfile() {
   const { api, logout } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -168,12 +166,8 @@ export default function AdminProfile() {
         <title>My Profile • Lootamo Admin</title>
       </Head>
 
-      <div className="min-h-screen bg-gray-100 flex">
-        <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <div className="flex-1 flex flex-col md:ml-72">
-          <AdminHeader onMenuClick={() => setSidebarOpen(true)} />
-
-          <main className="px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+      <AdminLayout>
+        <div className="space-y-8">
             {/* Header Section */}
             <div className="bg-gradient-to-r from-blue-500 to-indigo-700 rounded-2xl shadow-xl overflow-hidden">
               <div className="px-6 py-6">
@@ -532,9 +526,8 @@ export default function AdminProfile() {
                 </div>
               </div>
             </section>
-          </main>
         </div>
-      </div>
+      </AdminLayout>
 
       {/* Change Password Modal */}
       <ChangePasswordModal

@@ -205,6 +205,7 @@ export default function ProfileOrdersPage() {
                   <button
                     onClick={fetchOrders}
                     className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    style={{ cursor: "pointer" }}
                   >
                     Refresh
                   </button>
@@ -227,18 +228,17 @@ export default function ProfileOrdersPage() {
                   <div className="text-center py-16">
                     <IoCardOutline className="mx-auto h-14 w-14 text-gray-400" />
                     <h3 className="mt-4 text-lg font-medium text-gray-900">No orders yet</h3>
-                    <p className="mt-2 text-sm text-gray-500">
+                    <p className="mt-2 text-sm text-gray-500">  
                       You haven&apos;t placed any orders yet. Start shopping to see them here.
                     </p>
-                    <div className="mt-6">
+
                       <button
                         onClick={() => router.push('/products')}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        className="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer"
                       >
                         Start Shopping
                       </button>
                     </div>
-                  </div>
                 )}
 
                 {!ordersLoading && !ordersError && orders.length > 0 && (

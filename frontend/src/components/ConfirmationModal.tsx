@@ -80,6 +80,7 @@ export default function ConfirmationModal({
               </h3>
             </div>
             <button
+              style={{ cursor: "pointer" }}
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 transition-colors"
             >
@@ -104,6 +105,7 @@ export default function ConfirmationModal({
               {cancelText}
             </button>
             <button
+              style={{ cursor: "pointer" }}
               onClick={handleConfirm}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 confirmButtonClass || getDefaultButtonClass()

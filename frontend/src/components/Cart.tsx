@@ -227,6 +227,7 @@ export default function Cart() {
                   {selectedItems.size > 0 && (
                     <button
                       onClick={handleDeleteSelected}
+                      style={{ cursor: "pointer" }}
                       className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
                       disabled={loading}
                     >
@@ -250,6 +251,7 @@ export default function Cart() {
                   {selectedItems.size > 0 && (
                     <button
                       onClick={handleDeleteSelected}
+                      style={{ cursor: "pointer" }}
                       className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
                       disabled={loading}
                     >
@@ -298,7 +300,8 @@ export default function Cart() {
                       {filteredCartItems.length !== cartItems.length && (
                         <button
                           onClick={clearSearch}
-                          className="ml-2 text-blue-600 hover:text-blue-800 underline"
+                          className="ml-3 px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 hover:text-blue-800 rounded-full text-xs font-medium transition-colors border border-blue-200 hover:border-blue-300"
+                          style={{ cursor: "pointer" }}
                         >
                           Clear search
                         </button>
