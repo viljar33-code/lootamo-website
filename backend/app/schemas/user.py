@@ -17,8 +17,8 @@ class UserBase(BaseModel):
 class UserCreate(BaseModel):
     email: EmailStr
     username: str = Field(..., min_length=3, max_length=50)
-    first_name: str = Field(..., max_length=100)
-    last_name: str = Field(..., max_length=100)
+    first_name: Optional[str] = Field(None, max_length=100)
+    last_name: Optional[str] = Field(None, max_length=100)
     phone: Optional[str] = Field(None, max_length=20)
     password: str = Field(..., min_length=8, max_length=100)
     confirm_password: str = Field(..., min_length=8, max_length=100)
@@ -101,6 +101,16 @@ class TokenRefresh(BaseModel):
 
 class PasswordReset(BaseModel):
     email: EmailStr
+
+
+class PasswordResetResponse(BaseModel):
+    message: str
+    role: Optional[UserRole] = None
+
+
+class PasswordResetConfirmResponse(BaseModel):
+    message: str
+    role: UserRole
 
 
 class PasswordResetConfirm(BaseModel):

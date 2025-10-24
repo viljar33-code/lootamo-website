@@ -12,6 +12,7 @@ export default function ResetPassword() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     if (urlError === 'invalid_token') {
@@ -62,6 +63,11 @@ export default function ResetPassword() {
         throw new Error(data.detail || data.message || 'Failed to reset password');
       }
       
+      // Store user role for redirect logic
+      if (data.role) {
+        setUserRole(data.role);
+      }
+      
       setSuccess(true);
     } catch (err) {
       console.error('Password reset error:', err);
@@ -99,8 +105,11 @@ export default function ResetPassword() {
             </div>
             <h2 className="mt-3 text-xl font-bold text-gray-900">Password Reset Successful</h2>
             <p className="mt-2 text-gray-600">Your password has been successfully reset.</p>
-            <Link href="/signin" className="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-              Back to Sign In
+            <Link 
+              href={userRole === 'admin' ? '/admin/login' : '/signin'} 
+              className="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              {userRole === 'admin' ? 'Back to Admin Login' : 'Back to Sign In'}
             </Link>
           </div>
         </div>

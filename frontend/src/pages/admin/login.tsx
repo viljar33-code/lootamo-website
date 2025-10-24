@@ -145,8 +145,11 @@ export default function AdminLogin() {
                 {loading ? "Logging in…" : "Log in"}
               </button>
 
-              <div className="text-xs text-gray-400 text-center">
-                This area is restricted to administrators of Lootamo.
+              <div className="text-xs text-gray-400 text-center space-y-2">
+                <div>This area is restricted to administrators of Lootamo.</div>
+                <Link href="/admin/forgot-password" className="block text-blue-400 hover:text-blue-300 hover:underline">
+                  Forgot your password?
+                </Link>
               </div>
             </form>
           </div>

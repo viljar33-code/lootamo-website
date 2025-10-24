@@ -13,6 +13,7 @@ import {
   FiShield,
   FiEye,
 } from "react-icons/fi";
+import { toast } from 'react-hot-toast';
 
 export default function AdminLogs() {
   const router = useRouter();
@@ -144,9 +145,13 @@ export default function AdminLogs() {
       const statsResponse = adminService.calculateRetryStatsFromLogs(updatedLogs);
       setRetryStats(statsResponse);
       
+      // Show success toast
+      toast.success('Retry log deleted successfully');
+      
     } catch (error) {
       console.error('Failed to delete retry log:', error);
-      setError('Failed to delete retry log');
+      // Show error toast instead of setting error state
+      toast.error('Failed to delete retry log');
     } finally {
       setDeletingRetryLog(null);
       setShowDeleteConfirm(null);

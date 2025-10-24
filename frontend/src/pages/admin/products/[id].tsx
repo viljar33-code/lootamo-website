@@ -3,9 +3,6 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Image from 'next/image';
 import Link from 'next/link';
-import Topbar from '@/components/Topbar';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import { Product } from '@/types/product';
 import { productService } from '@/services/productService';
 import { useWishlist } from '@/contexts/WishlistContext';
@@ -165,8 +162,6 @@ export default function ProductDetailPage() {
         <Head>
           <title>Loading Product - Lootamo</title>
         </Head>
-        <Topbar />
-        <Navbar />
         <main className="min-h-screen bg-gray-50 py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="animate-pulse">
@@ -182,7 +177,6 @@ export default function ProductDetailPage() {
             </div>
           </div>
         </main>
-        <Footer />
       </>
     );
   }
@@ -193,23 +187,20 @@ export default function ProductDetailPage() {
         <Head>
           <title>Product Not Found - Lootamo</title>
         </Head>
-        <Topbar />
-        <Navbar />
         <main className="min-h-screen bg-gray-50 py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center py-12">
               <div className="text-red-500 text-lg mb-4">⚠️ Product not found</div>
               <p className="text-gray-600 mb-4">{error || 'The product you are looking for does not exist.'}</p>
               <button
-                onClick={() => router.push('/products')}
+                onClick={() => router.push('/admin/users')}
                 className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
               >
-                Back to Products
+                Go to Admin Users
               </button>
             </div>
           </div>
         </main>
-        <Footer />
       </>
     );
   }

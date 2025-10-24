@@ -98,6 +98,19 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({ children }) 
     } catch (error) {
       setWishlistItems(prev => prev.filter(id => id !== productId));
       console.error('Error adding to wishlist:', error);
+      
+      // Check for specific error types
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { status?: number; data?: { detail?: string } } };
+        if (axiosError.response?.status === 401) {
+          toast.error('Please sign in to add items to wishlist');
+          return;
+        } else if (axiosError.response?.status === 404) {
+          toast.error('Product not found');
+          return;
+        }
+      }
+      
       toast.error('Failed to add to wishlist');
     }
   };
@@ -124,6 +137,18 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({ children }) 
     } catch (error) {
       setWishlistItems(prev => [...prev, productId]);
       console.error('Error removing from wishlist:', error);
+      
+      // Check if it's a 404 error (item not found)
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { status?: number; data?: { detail?: string } } };
+        if (axiosError.response?.status === 404) {
+          toast.error('Item not found in wishlist');
+          // Remove from local state since it doesn't exist on server
+          setWishlistItems(prev => prev.filter(id => id !== productId));
+          return;
+        }
+      }
+      
       toast.error('Failed to remove from wishlist');
     }
   };

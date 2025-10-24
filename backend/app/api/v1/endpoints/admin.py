@@ -23,6 +23,16 @@ class AdminUserCreate(BaseModel):
     phone: Optional[str] = Field(None, max_length=20)
     password: str = Field(..., min_length=8, max_length=100)
     role: UserRole = Field(..., description="User role (admin, manager, supplier)")
+    
+    @validator('password')
+    def validate_password_strength(cls, v):
+        return validate_password(v)
+    
+    @validator('username')
+    def username_alphanumeric(cls, v):
+        if not v.replace('_', '').replace('-', '').isalnum():
+            raise ValueError('Username must contain only letters, numbers, hyphens, and underscores')
+        return v
 
 
 class AdminChangePassword(BaseModel):

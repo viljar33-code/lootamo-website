@@ -1,3 +1,7 @@
+export interface ProductImage {
+  url: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -24,7 +28,7 @@ export interface Product {
     min?: number;
   };
   categories: Category[];
-  images: string[];
+  images: ProductImage[];
   videos: ProductVideo[];
   restrictions?: ProductRestrictions;
   requirements?: ProductRequirements;

@@ -12,6 +12,8 @@ import {
   CardExpiryElement,
   CardCvcElement,
 } from "@stripe/react-stripe-js";
+import { productService } from '../services/productService';
+import { Product } from '../types/product';
 
 // Initialize Stripe
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
@@ -38,6 +40,18 @@ interface Order {
     price?: number;
     quantity?: number;
   }[];
+}
+
+interface OrderItemWithProduct {
+  id?: number;
+  product_name?: string;
+  product_id?: string;
+  name?: string;
+  title?: string;
+  price?: number;
+  quantity?: number;
+  product?: Product;
+  loading?: boolean;
 }
 
 
@@ -252,12 +266,51 @@ export default function Checkout() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showPayment, setShowPayment] = useState(false);
+  const [orderItemsWithProducts, setOrderItemsWithProducts] = useState<OrderItemWithProduct[]>([]);
+
+  const fetchProductDetails = async (productId: string): Promise<Product | null> => {
+    try {
+      return await productService.getProduct(productId);
+    } catch (error) {
+      console.error(`Error fetching product ${productId}:`, error);
+      return null;
+    }
+  };
 
   const fetchOrder = useCallback(async () => {
     try {
       const { checkoutService } = await import('../services/checkoutService');
       const orderData = await checkoutService.getOrderById(parseInt(orderId as string));
       setOrder(orderData);
+      
+      // Initialize order items with loading state
+      if (orderData.order_items && orderData.order_items.length > 0) {
+        const itemsWithLoading = orderData.order_items.map(item => ({
+          ...item,
+          loading: true
+        }));
+        setOrderItemsWithProducts(itemsWithLoading);
+        
+        // Fetch product details for each item
+        const itemsWithProducts = await Promise.all(
+          orderData.order_items.map(async (item) => {
+            if (item.product_id) {
+              const product = await fetchProductDetails(item.product_id);
+              return {
+                ...item,
+                product,
+                loading: false
+              };
+            }
+            return {
+              ...item,
+              loading: false
+            };
+          })
+        );
+        
+        setOrderItemsWithProducts(itemsWithProducts);
+      }
     } catch (error) {
       setError('Failed to load order details');
       console.error('Error fetching order:', error);
@@ -441,45 +494,95 @@ export default function Checkout() {
         </div>
 
         {/* Order Items */}
-        {order.order_items && order.order_items.length > 0 && (
+        {orderItemsWithProducts && orderItemsWithProducts.length > 0 && (
           <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900 flex items-center">
                 <FaCreditCard className="w-5 h-5 mr-2 text-blue-600" />
-                Order Items ({order.order_items.length})
+                Order Items ({orderItemsWithProducts.length})
               </h3>
             </div>
             <div className="p-6">
               <div className="space-y-4">
-                {order.order_items.map((item, index) => (
+                {orderItemsWithProducts.map((item, index) => (
                   <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <div className="flex items-center mb-2">
-                          <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-100 text-blue-600 text-xs font-medium rounded-full mr-3">
-                            {index + 1}
-                          </span>
-                          <h4 className="font-semibold text-gray-900">
-                            {item.product_name || item.name || item.title || `Product Item #${index + 1}`}
-                          </h4>
-                        </div>
-                        
-                        <div className="ml-9 space-y-1">
-                          {item.id && (
-                            <div className="text-sm text-gray-500">
-                              <span className="font-medium">Item ID:</span> #{item.id}
+                        <div className="flex items-start mb-3">
+                          {/* Product Image */}
+                          <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden mr-4 flex-shrink-0">
+                            {item.loading ? (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <FaSpinner className="animate-spin w-4 h-4 text-gray-400" />
+                              </div>
+                            ) : item.product?.thumbnail ? (
+                              <img 
+                                src={item.product.thumbnail} 
+                                alt={item.product.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = '/placeholder-game.jpg';
+                                }}
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+                                <FaCreditCard className="w-6 h-6 text-blue-500" />
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="flex-1">
+                            <div className="flex items-center mb-2">
+                              <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-100 text-blue-600 text-xs font-medium rounded-full mr-3">
+                                {index + 1}
+                              </span>
+                              <h4 className="font-semibold text-gray-900">
+                                {item.loading ? (
+                                  <div className="flex items-center">
+                                    <FaSpinner className="animate-spin w-4 h-4 mr-2 text-gray-400" />
+                                    Loading product details...
+                                  </div>
+                                ) : (
+                                  item.product?.name || 
+                                  item.product_name || 
+                                  item.name || 
+                                  item.title || 
+                                  `Product Item #${index + 1}`
+                                )}
+                              </h4>
                             </div>
-                          )}
-                          {item.quantity && (
-                            <div className="text-sm text-gray-500">
-                              <span className="font-medium">Quantity:</span> {item.quantity}
+                            
+                            <div className="space-y-1">
+                              {item.product?.platform && (
+                                <div className="text-sm text-gray-600">
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    {item.product.platform}
+                                  </span>
+                                </div>
+                              )}
+                              {item.product?.region && (
+                                <div className="text-sm text-gray-500">
+                                  <span className="font-medium">Region:</span> {item.product.region}
+                                </div>
+                              )}
+                              {item.id && (
+                                <div className="text-sm text-gray-500">
+                                  <span className="font-medium">Item ID:</span> #{item.id}
+                                </div>
+                              )}
+                              {item.quantity && (
+                                <div className="text-sm text-gray-500">
+                                  <span className="font-medium">Quantity:</span> {item.quantity}
+                                </div>
+                              )}
+                              {item.price && (
+                                <div className="text-sm text-gray-500">
+                                  <span className="font-medium">Unit Price:</span> ${item.price.toFixed(2)}
+                                </div>
+                              )}
                             </div>
-                          )}
-                          {item.price && (
-                            <div className="text-sm text-gray-500">
-                              <span className="font-medium">Unit Price:</span> ${item.price.toFixed(2)}
-                            </div>
-                          )}
+                          </div>
                         </div>
                       </div>
                       
@@ -501,7 +604,7 @@ export default function Checkout() {
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-semibold text-gray-900">Order Total:</span>
                   <span className="text-xl font-bold text-blue-600">
-                    ${order.total_price.toFixed(2)} {order.currency}
+                    ${order?.total_price.toFixed(2)} {order?.currency}
                   </span>
                 </div>
               </div>

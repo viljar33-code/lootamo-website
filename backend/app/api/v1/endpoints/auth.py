@@ -5,8 +5,8 @@ from app.core.database import get_async_db
 from app.services.auth_service import AuthService
 from app.services.email_service import email_service
 from app.schemas.user import (
-    UserCreate, UserResponse, UserLogin, Token, TokenRefresh,
-    PasswordReset, PasswordResetConfirm, ChangePassword
+    UserCreate, UserLogin, UserResponse, Token, TokenRefresh, 
+    PasswordReset, PasswordResetConfirm, ChangePassword, PasswordResetResponse, PasswordResetConfirmResponse
 )
 from app.api.dependencies import get_current_active_user
 from app.models.user import User
@@ -105,7 +105,7 @@ async def logout():
     return {"message": "Successfully logged out"}
 
 
-@router.post("/password-reset")
+@router.post("/password-reset", response_model=PasswordResetResponse)
 async def request_password_reset(
     reset_data: PasswordReset,
     db: AsyncSession = Depends(get_async_db)
@@ -114,7 +114,9 @@ async def request_password_reset(
     auth_service = AuthService(db)
     user = await auth_service.get_user_by_email(reset_data.email)
     
+    user_role = None
     if user:
+        user_role = user.role
         # Generate reset token (valid for 1 hour)
         reset_token = auth_service.create_password_reset_token(user.uuid)
         
@@ -129,10 +131,14 @@ async def request_password_reset(
             print(f"Failed to send password reset email: {e}")
     
     # Always return success message for security (don't reveal if email exists)
-    return {"message": "If the email exists, a password reset link has been sent"}
+    # But include role if user exists for frontend routing purposes
+    return PasswordResetResponse(
+        message="If the email exists, a password reset link has been sent",
+        role=user_role
+    )
 
 
-@router.post("/password-reset/confirm")
+@router.post("/password-reset/confirm", response_model=PasswordResetConfirmResponse)
 async def confirm_password_reset(
     reset_data: PasswordResetConfirm,
     db: AsyncSession = Depends(get_async_db)
@@ -140,15 +146,25 @@ async def confirm_password_reset(
     """Confirm password reset with token"""
     auth_service = AuthService(db)
     
+    # First verify the token to get user info
+    user = await auth_service.verify_password_reset_token(reset_data.token)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token"
+        )
+    
     success = await auth_service.reset_password(
         reset_data.token, 
         reset_data.new_password
     )
-    
     if not success:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid or expired reset token"
         )
     
-    return {"message": "Password reset successful"}
+    return PasswordResetConfirmResponse(
+        message="Password reset successful",
+        role=user.role
+    )

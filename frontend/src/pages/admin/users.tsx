@@ -1,12 +1,13 @@
 import Head from "next/head";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import { FiUsers, FiTrash2, FiSearch, FiRefreshCw, FiEye, FiShield, FiMail, FiUserPlus, FiChevronLeft, FiChevronRight, FiX } from "react-icons/fi";
+import { FiUsers, FiTrash2, FiSearch, FiRefreshCw, FiEye, FiShield, FiMail, FiUserPlus, FiChevronLeft, FiChevronRight, FiX, FiRotateCcw } from "react-icons/fi";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import { useAuth } from '@/contexts/AuthContext';
 import { AdminService, AdminUser } from '@/services/adminService';
 import withAdminAuth from '@/hocs/withAdminAuth';
 import ConfirmationModal from "@/components/ConfirmationModal";
+import { toast } from 'react-hot-toast';
 
 interface UserStats {
   totalUsers: number;
@@ -49,7 +50,7 @@ function AdminUsers() {
     last_name: '',
     phone: '',
     password: '',
-    role: 'customer' as 'customer' | 'admin'
+    role: 'customer' as 'customer' | 'supplier' | 'manager' | 'admin'
   });
   const [isCreating, setIsCreating] = useState(false);
 
@@ -68,7 +69,28 @@ function AdminUsers() {
       const skip = (currentPage - 1) * itemsPerPage;
       const result = await adminService.getUsers(skip, itemsPerPage);
       
-      setUsers(result.users);
+      // Fetch order statistics for each user
+      const usersWithStats = await Promise.all(
+        result.users.map(async (user) => {
+          try {
+            const orderStats = await adminService.getUserOrderStats(user.id);
+            return {
+              ...user,
+              total_orders: orderStats.total_orders,
+              total_spent: orderStats.total_spent
+            };
+          } catch (error) {
+            console.error(`Failed to fetch order stats for user ${user.id}:`, error);
+            return {
+              ...user,
+              total_orders: 0,
+              total_spent: 0
+            };
+          }
+        })
+      );
+      
+      setUsers(usersWithStats);
       setTotalUsers(result.total);
     } catch (error) {
       console.error('Failed to fetch users:', error);
@@ -105,6 +127,13 @@ function AdminUsers() {
     setRefreshing(false);
   };
 
+  const handleReset = () => {
+    setSearchTerm('');
+    setRoleFilter('all');
+    setStatusFilter('all');
+    setCurrentPage(1);
+  };
+
   const handleDeleteClick = (user: AdminUser) => {
     setDeleteModal({
       isOpen: true,
@@ -119,9 +148,10 @@ function AdminUsers() {
       await adminService.deleteUser(deleteModal.userId);
       await fetchUsers();
       setDeleteModal({ isOpen: false, userId: 0, userEmail: '' });
+      toast.success('User deleted successfully!');
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      alert(`Failed to delete user: ${errorMessage}`);
+      toast.error(`Failed to delete user: ${errorMessage}`);
     }
   };
 
@@ -146,17 +176,74 @@ function AdminUsers() {
     });
   };
 
+  const validatePassword = (password: string): string[] => {
+    const errors: string[] = [];
+    
+    if (password.length < 8) {
+      errors.push('Password must be at least 8 characters long');
+    }
+    
+    if (!/[A-Z]/.test(password)) {
+      errors.push('Password must contain at least one uppercase letter');
+    }
+    
+    if (!/[a-z]/.test(password)) {
+      errors.push('Password must contain at least one lowercase letter');
+    }
+    
+    if (!/\d/.test(password)) {
+      errors.push('Password must contain at least one digit');
+    }
+    
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      errors.push('Password must contain at least one special character');
+    }
+    
+    return errors;
+  };
+
   const handleCreateUser = async () => {
     try {
       setIsCreating(true);
+      
+      // Validate password before sending request
+      const passwordErrors = validatePassword(newUser.password);
+      if (passwordErrors.length > 0) {
+        alert(`Password validation failed:\n${passwordErrors.join('\n')}`);
+        return;
+      }
+      
+      // Validate username format
+      if (!/^[a-zA-Z0-9_-]+$/.test(newUser.username)) {
+        alert('Username must contain only letters, numbers, hyphens, and underscores');
+        return;
+      }
+      
       const adminService = new AdminService(api);
       await adminService.createUser(newUser);
       await fetchUsers();
       await fetchUserStats();
       handleAddUserCancel();
+      toast.success('User created successfully!');
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      alert(`Failed to create user: ${errorMessage}`);
+      console.error('User creation error:', error);
+      let errorMessage = 'Failed to create user';
+      
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: { detail?: string | { msg: string }[] } } };
+        if (axiosError.response?.data?.detail) {
+          const detail = axiosError.response.data.detail;
+          if (Array.isArray(detail)) {
+            errorMessage = detail.map(err => err.msg).join(', ');
+          } else if (typeof detail === 'string') {
+            errorMessage = detail;
+          }
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(`Failed to create user: ${errorMessage}`);
     } finally {
       setIsCreating(false);
     }
@@ -175,6 +262,9 @@ function AdminUsers() {
       await adminService.updateUserRole(userId, newRole);
       await fetchUsers();
       await fetchUserStats(); // Refresh stats after role change
+      
+      // Show success toast
+      toast.success(`User role updated to ${newRole} successfully`);
     } catch (error: unknown) {
       console.error('Role update error:', error);
       let errorMessage = 'Failed to update user role';
@@ -190,7 +280,8 @@ function AdminUsers() {
         errorMessage = error.message;
       }
       
-      alert(errorMessage);
+      // Show error toast instead of alert
+      toast.error(errorMessage);
     }
   };
 
@@ -395,6 +486,15 @@ function AdminUsers() {
               >
                 <FiUserPlus className="w-4 h-4" />
                 Add User
+              </button>
+              <button 
+                onClick={handleReset}
+                className="border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:shadow-md px-4 py-2 flex items-center gap-2"
+                style={{ cursor: "pointer" }}
+                title="Reset all filters and search"
+              >
+                <FiRotateCcw className="w-4 h-4" />
+                Reset
               </button>
             </div>
           </div>
@@ -760,10 +860,37 @@ function AdminUsers() {
                     type="password"
                     value={newUser.password}
                     onChange={(e) => handleInputChange('password', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      newUser.password && validatePassword(newUser.password).length > 0 
+                        ? 'border-red-300 bg-red-50' 
+                        : newUser.password 
+                          ? 'border-green-300 bg-green-50' 
+                          : 'border-gray-300'
+                    }`}
                     required
-                    minLength={6}
+                    minLength={8}
+                    placeholder="Enter a strong password"
                   />
+                  <div className="mt-2 space-y-1">
+                    <p className="text-xs font-medium text-gray-700">Password requirements:</p>
+                    <div className="grid grid-cols-1 gap-1 text-xs">
+                      <span className={`flex items-center gap-1 ${newUser.password.length >= 8 ? 'text-green-600' : 'text-red-600'}`}>
+                        {newUser.password.length >= 8 ? '✓' : '✗'} At least 8 characters
+                      </span>
+                      <span className={`flex items-center gap-1 ${/[A-Z]/.test(newUser.password) ? 'text-green-600' : 'text-red-600'}`}>
+                        {/[A-Z]/.test(newUser.password) ? '✓' : '✗'} One uppercase letter
+                      </span>
+                      <span className={`flex items-center gap-1 ${/[a-z]/.test(newUser.password) ? 'text-green-600' : 'text-red-600'}`}>
+                        {/[a-z]/.test(newUser.password) ? '✓' : '✗'} One lowercase letter
+                      </span>
+                      <span className={`flex items-center gap-1 ${/\d/.test(newUser.password) ? 'text-green-600' : 'text-red-600'}`}>
+                        {/\d/.test(newUser.password) ? '✓' : '✗'} One digit
+                      </span>
+                      <span className={`flex items-center gap-1 ${/[!@#$%^&*(),.?":{}|<>]/.test(newUser.password) ? 'text-green-600' : 'text-red-600'}`}>
+                        {/[!@#$%^&*(),.?":{}|<>]/.test(newUser.password) ? '✓' : '✗'} One special character (!@#$%^&*(),.?&quot;:{}|&lt;&gt;)
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
                 <div>
@@ -774,7 +901,9 @@ function AdminUsers() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   >
-                    <option value="customer">User</option>
+                    <option value="customer">Customer</option>
+                    <option value="supplier">Supplier</option>
+                    <option value="manager">Manager</option>
                     <option value="admin">Admin</option>
                   </select>
                 </div>

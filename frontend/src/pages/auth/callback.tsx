@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
@@ -9,8 +9,15 @@ const OAuthCallback = () => {
   const { loginWithOAuth, isAuthenticated } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const processedRef = useRef(false);
 
   const processAuth = useCallback(async () => {
+    // Prevent double execution
+    if (processedRef.current) {
+      return;
+    }
+    processedRef.current = true;
+
     try {
       const { 
         access_token, 
@@ -85,7 +92,7 @@ const OAuthCallback = () => {
         try {
           const oauthEndpoint = provider === 'facebook' ? 'facebook' : 'google';
           const response = await axios.get(
-            `${process.env.NEXT_PUBLIC_API_URL}/auth/${oauthEndpoint}/callback?code=${code}&state=${state || ''}&redirect_uri=${encodeURIComponent(`${window.location.origin}/auth/callback`)}`,
+            `${process.env.NEXT_PUBLIC_API_URL}/auth/${oauthEndpoint}/callback?code=${code}&state=${state || ''}`,
             { withCredentials: true }
           );
 
@@ -118,21 +125,13 @@ const OAuthCallback = () => {
       setError(getErrorMessage(err, 'An unknown error occurred'));
       setIsLoading(false);
     }
-  }, [router, loginWithOAuth]);
+  }, [router.query, loginWithOAuth, router]);
 
   useEffect(() => {
-    if (router.isReady) {
+    if (router.isReady && !processedRef.current) {
       processAuth();
     }
   }, [router.isReady, processAuth]);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      const redirectPath = localStorage.getItem('redirect_after_login') || '/';
-      localStorage.removeItem('redirect_after_login');
-      router.push(redirectPath);
-    }
-  }, [isAuthenticated, router]);
 
   if (isLoading) {
     return (
@@ -150,7 +149,7 @@ const OAuthCallback = () => {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 px-4">
+      <div className="flex items-center justify-center min-h-scuserreen bg-gray-50 px-4">
         <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-md">
           <div className="text-center">
             <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">

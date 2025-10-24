@@ -8,6 +8,7 @@ export default function Forgot() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,6 +33,11 @@ export default function Forgot() {
       
       if (!response.ok) {
         throw new Error(data.detail || data.message || 'Failed to send reset email');
+      }
+      
+      // Store user role for potential redirect logic
+      if (data.role) {
+        setUserRole(data.role);
       }
       
       setSent(true);
@@ -99,7 +105,12 @@ export default function Forgot() {
                     >
                       Try a different email
                     </button>
-                    <Link href="/signin" className="underline text-gray-700 hover:text-gray-900">Back to sign in</Link>
+                    <Link 
+                      href={userRole === 'admin' ? '/admin/login' : '/signin'} 
+                      className="underline text-gray-700 hover:text-gray-900"
+                    >
+                      Back to sign in
+                    </Link>
                   </div>
                 </div>
               )}
