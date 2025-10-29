@@ -1,12 +1,12 @@
 import logging
 import asyncio
-from typing import List, Optional
-from datetime import datetime, timedelta
+from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError
-from app.models.product import Product, Category, Image, Video, Restriction, Requirement, ProductSyncLog
-from app.services.g2a_service import fetch_all_products, fetch_products
+from sqlalchemy import text, func
+from app.models.product import Product, Category, Image, Video, Restriction, Requirement
+from app.services.g2a_service import fetch_products
 from app.core.database import SessionLocal, get_db
+from app.models.product import ProductSyncLog
 from app.services.error_log_service import ErrorLogService
 
 def batches(iterable, batch_size):
@@ -135,6 +135,9 @@ def save_products(db: Session, products: list):
         requirement.minimal = reqs.get("minimal", {})
         requirement.recommended = reqs.get("recommended", {})
         db.add(requirement)
+        
+        # Mark product as active during sync
+        product.is_active = True
 
     db.commit()
 
@@ -239,70 +242,8 @@ def save_products_batch(db: Session, products: List[dict]) -> tuple[int, int, in
 
                 # Update product fields
                 product.name = p["name"]
-                product.slug = p["slug"]
-                product.type = p.get("type") or None
-                product.qty = p.get("qty")
-                product.min_price = p.get("minPrice")
-                product.retail_min_price = p.get("retail_min_price")
-                product.retail_min_base_price = p.get("retailMinBasePrice")
-                product.available_to_buy = p.get("availableToBuy")
-                product.thumbnail = p.get("thumbnail") or None
-                product.small_image = p.get("smallImage") or None
-                product.cover_image = p.get("coverImage") or None
-                
-                # Handle empty string dates - convert to None for PostgreSQL
-                release_date = p.get("release_date")
-                product.release_date = None if release_date == "" else release_date
-                
-                product.region = p.get("region") or None
-                product.developer = p.get("developer") or None
-                product.publisher = p.get("publisher") or None
-                product.platform = p.get("platform") or None
-                product.price_limit = p.get("priceLimit")
                 product.is_active = True  # Mark as active during sync
-                # last_synced will be updated automatically via onupdate=func.now()
-
-                db.add(product)
-                db.flush()
-
-                product.categories.clear()
-                for c in p.get("categories", []):
-                    category = db.query(Category).filter(Category.id == str(c["id"])).first()
-                    if not category:
-                        category = Category(id=str(c["id"]), name=c["name"])
-                    product.categories.append(category)
-
-                product.images.clear()
-                for img_url in p.get("images", []):
-                    image = db.query(Image).filter(Image.url == img_url).first()
-                    if not image:
-                        image = Image(url=img_url)
-                    product.images.append(image)
-
-                product.videos.clear()
-                for v in p.get("videos", []):
-                    url = v.get("url")
-                    video_type = v.get("type", "")
-                    if url:
-                        video = db.query(Video).filter(Video.url == url).first()
-                        if not video:
-                            video = Video(url=url, video_type=video_type)
-                        product.videos.append(video)
-
-                res = p.get("restrictions", {})
-                restriction = db.query(Restriction).filter(Restriction.product_id == product.id).first()
-                if not restriction:
-                    restriction = Restriction(product_id=product.id)
-                restriction.pegi_violence = res.get("pegi_violence", False)
-                restriction.pegi_profanity = res.get("pegi_profanity", False)
-                restriction.pegi_discrimination = res.get("pegi_discrimination", False)
-                restriction.pegi_drugs = res.get("pegi_drugs", False)
-                restriction.pegi_fear = res.get("pegi_fear", False)
-                restriction.pegi_gambling = res.get("pegi_gambling", False)
-                restriction.pegi_online = res.get("pegi_online", False)
-                restriction.pegi_sex = res.get("pegi_sex", False)
-                db.add(restriction)
-
+                
                 # Handle requirements
                 reqs = p.get("requirements", {})
                 requirement = db.query(Requirement).filter(Requirement.product_id == product.id).first()
@@ -311,6 +252,9 @@ def save_products_batch(db: Session, products: List[dict]) -> tuple[int, int, in
                 requirement.minimal = reqs.get("minimal", {})
                 requirement.recommended = reqs.get("recommended", {})
                 db.add(requirement)
+                
+                # Add product to session
+                db.add(product)
                 
                 success_count += 1
                 
@@ -437,7 +381,7 @@ async def sync_all_products(batch_size: int = 500, start_page: Optional[int] = N
         }
 
 
-async def sync_all_products_paginated(batch_size: int = 500) -> dict:
+async def sync_all_products_paginated(batch_size: int = 100) -> dict:
     """
     Sync all products from G2A API using pagination approach with discontinued product handling.
     Fetches products page by page until no more products are returned.
@@ -480,10 +424,9 @@ async def sync_all_products_paginated(batch_size: int = 500) -> dict:
         while True:
             try:
                 logger.info(f"Fetching products from page {page}...")
+                products = await fetch_products(page)
                 
-                products = await fetch_products(page=page)
-                
-                if not products or len(products) == 0:
+                if not products:
                     logger.info(f"No products found on page {page}. Sync completed.")
                     break
                 
@@ -503,6 +446,14 @@ async def sync_all_products_paginated(batch_size: int = 500) -> dict:
                             save_products_batch(db, batch)
                             page_batches_processed += 1
                             logger.info(f"Successfully processed page {page}, batch {batch_number}")
+                            
+                            # Yield control to event loop every batch to prevent blocking
+                            await asyncio.sleep(0.1)  # 100ms delay between batches
+                            
+                            # Additional yielding every 5 batches for better responsiveness
+                            if batch_number % 5 == 0:
+                                await asyncio.sleep(0.2)  # 200ms longer pause
+                                
                         except Exception as e:
                             db.rollback()  
                             import traceback
@@ -519,6 +470,9 @@ async def sync_all_products_paginated(batch_size: int = 500) -> dict:
                 pages_processed += 1
                 consecutive_page_errors = 0  
                 logger.info(f"Completed page {page}: {page_product_count} products, {page_batches_processed} batches processed")
+                
+                # Yield control between pages to prevent blocking other operations
+                await asyncio.sleep(0.3)  # 300ms pause between pages
                 
                 page += 1
                 
@@ -616,14 +570,13 @@ async def sync_all_products_paginated(batch_size: int = 500) -> dict:
         }
 
 
-async def sync_products_by_page(page: int, batch_size: int = 500) -> dict:
+async def sync_products_by_page(page: int, batch_size: int = 100) -> dict:
     """
-    Sync products from a specific page for incremental updates.
+    Sync products from a specific page for incremental updates with performance optimization.
     
     Args:
         page: Page number to sync
         batch_size: Number of products to process in each batch within a page
-    
         
     Returns:
         Dictionary with sync statistics
@@ -635,7 +588,8 @@ async def sync_products_by_page(page: int, batch_size: int = 500) -> dict:
         "page": page,
         "products_fetched": 0,
         "products_saved": 0,
-        "errors": 0
+        "batches_processed": 0,
+        "errors": []
     }
     
     db = SessionLocal()
@@ -648,14 +602,30 @@ async def sync_products_by_page(page: int, batch_size: int = 500) -> dict:
         logger.info(f"Fetched {len(products)} products from page {page}")
         
         if products:
-            success_count, error_count = save_products_batch(db, products)
-            stats["products_saved"] = success_count
-            stats["errors"] = error_count
+            # Process products in smaller batches for better performance
+            for i, batch in enumerate(batches(products, batch_size)):
+                batch_number = i + 1
+                try:
+                    logger.debug(f"Processing batch {batch_number} with {len(batch)} products from page {page}")
+                    save_products_batch(db, batch)
+                    stats["products_saved"] += len(batch)
+                    stats["batches_processed"] += 1
+                    
+                    # Yield control to event loop between batches
+                    await asyncio.sleep(0.05)  # 50ms delay between batches
+                    
+                except Exception as e:
+                    error_msg = f"Error processing batch {batch_number} on page {page}: {str(e)}"
+                    logger.error(error_msg)
+                    stats["errors"].append(error_msg)
+                    continue
             
-            logger.info(f"Page {page} sync completed: {success_count} saved, {error_count} errors")
+            logger.info(f"Page {page} sync completed: {stats['products_saved']} products saved in {stats['batches_processed']} batches")
         
     except Exception as e:
-        logger.error(f"Error syncing page {page}: {str(e)}")
+        error_msg = f"Error syncing page {page}: {str(e)}"
+        logger.error(error_msg)
+        stats["errors"].append(error_msg)
         raise
         
     finally:

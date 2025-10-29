@@ -13,8 +13,8 @@ interface AdminLayoutProps {
 function AdminLayoutContent({ children }: AdminLayoutProps) {
   const [isClient, setIsClient] = useState(false);
   const { user, loading } = useAuth();
-  const { isCollapsed, isMobileOpen, setMobileOpen } = useSidebar();
-  const router = useRouter();
+  const router = useRouter();  const { isCollapsed, isMobileOpen, setMobileOpen } = useSidebar();
+
 
   useEffect(() => {
     setIsClient(true);
@@ -45,7 +45,7 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
   return (
     <div className="min-h-screen bg-gray-100 flex">
          <AdminSidebar />
-         <div className={`flex-1 flex flex-col transition-all duration-300 ${isCollapsed ? 'md:ml-16' : 'md:ml-72'}`}>
+         <div className={`flex flex-col transition-all duration-300 ${isCollapsed ? 'md:ml-16 w-full' : 'md:ml-72 md:w-[calc(100%-288px)] w-full'}`}>
            <AdminHeader onMenuClick={() => setMobileOpen(true)} />
  
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50">

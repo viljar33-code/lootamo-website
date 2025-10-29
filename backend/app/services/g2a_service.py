@@ -51,7 +51,7 @@ async def fetch_products(page: int = 1, max_retries: int = 3, base_delay: float 
             token = await get_access_token_cached()
             headers = {"Authorization": f"Bearer {token}"}
               
-            async with httpx.AsyncClient(timeout=30.0) as client:
+            async with httpx.AsyncClient(timeout=60.0) as client:
                 response = await client.get(
                     settings.G2A_PRODUCTS_URL, 
                     headers=headers, 
@@ -305,7 +305,6 @@ async def pay_g2a_order(g2a_order_id: str) -> Optional[Dict[str, Any]]:
                 
     except httpx.HTTPError as e:
         logger.error(f"HTTP error paying G2A order: {e}")
-        # Log G2A payment failure
         db = SessionLocal()
         try:
             ErrorLogService.log_exception(

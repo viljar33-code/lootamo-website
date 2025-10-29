@@ -23,7 +23,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-14 md:h-16">
           <div className="flex items-center gap-4">
             <Link href="/" className="flex items-center gap-3">
-              <Image src="/images/logo1.png" alt="Lootamo" width={120} height={16} className="h-10 w-auto"/>
+              <Image src="/images/logo1.png" alt="Lootamo" width={120} height={16} className="sm:h-10 w-auto"/>
               {/* <span className="font-bold text-lg text-gray-900">Lootamo</span> */}
             </Link>
 

@@ -76,7 +76,7 @@ app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
 
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["localhost", "127.0.0.1", "*.lootamo.com"] if settings.ENVIRONMENT == "production" else ["*"]
+    allowed_hosts=["localhost", "127.0.0.1", "*.lootamo.com", "*.ondigitalocean.app", "seal-app-gltln.ondigitalocean.app"] if settings.ENVIRONMENT == "production" else ["*"]
 )
 
 # CORS middleware

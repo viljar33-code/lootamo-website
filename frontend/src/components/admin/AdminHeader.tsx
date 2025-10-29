@@ -18,8 +18,9 @@ export default function AdminHeader({ onMenuClick }: { onMenuClick?: () => void 
               src="/images/logo1.png"
               alt="Lootamo"
               width={120}
-              height={16}
+              height={48}
               className="h-12 w-auto"
+              priority
             />
           </div>
           <div className="hidden md:block border-l h-6" />

@@ -25,6 +25,9 @@ async_engine = create_async_engine(
     echo=settings.DEBUG,
     pool_pre_ping=True,
     pool_recycle=300,
+    pool_size=15,
+    max_overflow=25,
+    pool_timeout=30
 )
 
 # Async session maker
@@ -39,6 +42,10 @@ sync_engine = create_engine(
     echo=settings.DEBUG,
     pool_pre_ping=True,
     pool_recycle=300,
+    pool_size=20,
+    max_overflow=30,
+    pool_timeout=30,
+    pool_reset_on_return='commit'
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sync_engine)

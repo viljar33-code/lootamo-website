@@ -193,8 +193,7 @@ export default function AdminProducts() {
                 <button
                   onClick={handleRefresh}
                   disabled={refreshing}
-                  className="flex items-center gap-2 px-4 py-3 text-sm bg-white/10 backdrop-blur-sm text-white rounded-xl hover:bg-white/20 disabled:opacity-50 transition-all duration-200 border border-white/20"                 
-                  style={{ cursor: "pointer" }}
+                  className="flex items-center gap-2 px-4 py-3 text-sm bg-white/10 backdrop-blur-sm text-white rounded-xl hover:bg-white/20 disabled:opacity-50 transition-all duration-200 border border-white/20 cursor-pointer"                 
                 >
                   <FiRefreshCw className={`text-sm ${refreshing ? 'animate-spin' : ''}`} />
                   {refreshing ? 'Refreshing...' : 'Refresh'}
@@ -204,7 +203,7 @@ export default function AdminProducts() {
           </div>
 
           {/* Sync Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 px-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-all duration-300">
               <div className="flex items-center justify-between">
                 <div>
@@ -258,7 +257,7 @@ export default function AdminProducts() {
           </div>
 
           {/* Filters */}
-          <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mx-6 hover:shadow-xl transition-all duration-300">
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-blue-100 rounded-lg">
@@ -330,8 +329,8 @@ export default function AdminProducts() {
           </div>
 
           {/* Products Table */}
-          <div className="bg-white rounded-xl shadow-lg border border-gray-200 mx-6 hover:shadow-xl transition-all duration-300 overflow-hidden">
-            <div className="overflow-x-auto bg-gray-50 rounded-lg border border-gray-200">
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300">
+            {/* <div className="overflow-x-auto bg-gray-50 rounded-lg border border-gray-200">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-100">
                   <tr>
@@ -459,11 +458,140 @@ export default function AdminProducts() {
                   )}
                 </tbody>
               </table>
+            </div> */}
+            <div className="overflow-x-auto">
+             <table className="divide-y divide-gray-200 w-full">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
+                      #
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
+                      Product
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
+                      Categories
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
+                      Price Range
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
+                      Last Updated
+                    </th>
+                    <th className="px-6 py-4 text-right text-xs font-semibold text-gray-900 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-12 text-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                        <p className="text-gray-500 mt-2">Loading products...</p>
+                      </td>
+                    </tr>
+                  ) : products.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-12 text-center">
+                        <div className="p-3 bg-gray-100 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
+                          <FiPackage className="text-gray-400 text-lg" />
+                        </div>
+                        <p className="text-gray-500 font-medium">No products found</p>
+                        <p className="text-gray-400 text-sm mt-1">Products will appear here once synced</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    products.map((product, index) => (
+                      <tr key={product.id} className="hover:bg-blue-50 transition-colors duration-200">
+                        <td className="px-6 py-4">
+                          <div className="font-semibold text-gray-900">{(currentPage - 1) * itemsPerPage + index + 1}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center">
+                            {product.images && product.images.length > 0 && (
+                              <img
+                                src={product.images[0].url}
+                                alt={product.images[0].alt_text || product.name}
+                                className="h-12 w-12 rounded-lg object-cover mr-4 border border-gray-200"
+                              />
+                            )}
+                            <div>
+                              <div className="text-sm font-semibold text-gray-900 truncate max-w-xs">
+                                {product.name}
+                              </div>
+                              <div className="text-xs text-gray-500">ID: {product.id}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex gap-2">
+                            {product.categories && product.categories.length > 0 ? (
+                              <>
+                                {(expandedCategories[product.id] ? product.categories : product.categories.slice(0, 2)).map((category) => (
+                                  <span
+                                    key={category.id}
+                                    className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 whitespace-nowrap "
+                                  >
+                                    {category.name}
+                                  </span>
+                                ))}
+                                {product.categories.length > 2 && (
+                                  <button
+                                    onClick={() => toggleCategoryExpansion(product.id)}
+                                    className="text-xs text-blue-600 hover:text-blue-800 font-medium cursor-pointer hover:underline whitespace-nowrap"
+                                  >
+                                    {expandedCategories[product.id] 
+                                      ? 'Show less' 
+                                      : `+${product.categories.length - 2} more`
+                                    }
+                                  </button>
+                                )}
+                              </>
+                            ) : (
+                              <span className="text-xs text-gray-500">No categories</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-semibold text-gray-900">
+                            {formatPrice(product.min_price, product.currency)}
+                            {product.max_price && product.max_price !== product.min_price && (
+                              <> - {formatPrice(product.max_price, product.currency)}</>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {getStatusBadge(product.is_active)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {new Date(product.updated_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => window.open(`/admin/products/${product.id}`, '_blank')}
+                              className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors duration-200"
+                              title="View Product"
+                              style={{ cursor: "pointer" }}
+                            >
+                              <FiEye className="text-sm" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex justify-center items-center mt-6 space-x-2">
+              <div className="flex justify-center items-center my-6 space-x-2">
                 {/* Previous button */}
                 <button
                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
