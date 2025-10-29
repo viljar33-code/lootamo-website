@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.security import HTTPBearer
 from starlette.middleware.sessions import SessionMiddleware
 from contextlib import asynccontextmanager
@@ -73,11 +72,6 @@ def custom_openapi():
 app.openapi = custom_openapi
 
 app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
-
-app.add_middleware(
-    TrustedHostMiddleware,
-    allowed_hosts=["localhost", "127.0.0.1", "*.lootamo.com", "*.ondigitalocean.app", "seal-app-gltln.ondigitalocean.app"] if settings.ENVIRONMENT == "production" else ["*"]
-)
 
 # CORS middleware
 print(f"Allowed CORS origins: {settings.allowed_origins_list}")
