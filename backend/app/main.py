@@ -15,15 +15,33 @@ from app.services.scheduler_service import scheduler_service
 
 @asynccontextmanager
 async def lifespan(app_instance: FastAPI):
-    await create_tables()
-    await get_redis_client()
+    try:
+        import asyncio
+        await asyncio.wait_for(create_tables(), timeout=5.0)
+        print("Database tables created/verified")
+    except Exception as e:
+        print(f"Database setup failed (continuing without DB): {e}")
     
-    await scheduler_service.start()
+    try:
+        await get_redis_client()
+        print("Redis connection established")
+    except Exception as e:
+        print(f"Redis connection failed: {e}")
+    
+    try:
+        await scheduler_service.start()
+        print("Scheduler started")
+    except Exception as e:
+        print(f"Scheduler failed: {e}")
     
     yield
     
-    await scheduler_service.shutdown()
-    await close_redis_client()
+    try:
+        await scheduler_service.shutdown()
+        await close_redis_client()
+        print("Cleanup completed")
+    except Exception as e:
+        print(f"Cleanup failed: {e}")
 
 
 security = HTTPBearer()
@@ -33,8 +51,8 @@ app = FastAPI(
     description="Production-ready e-commerce backend with authentication, catalog sync, and payment processing",
     version="1.0.0",
     lifespan=lifespan,
-    docs_url="/docs" if settings.DEBUG else None,
-    redoc_url="/redoc" if settings.DEBUG else None,
+    docs_url="/docs",
+    redoc_url="/redoc",
     swagger_ui_parameters={
         "persistAuthorization": True,
         "displayRequestDuration": True,
@@ -83,10 +101,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Rate limiting middleware - will use memory fallback if Redis unavailable
 app.add_middleware(RateLimitMiddleware)
 
-# Error logging middleware - automatically logs unhandled exceptions
 app.add_middleware(ErrorLoggingMiddleware)
 
 app.include_router(api_router, prefix="/api/v1")
@@ -103,6 +119,6 @@ if __name__ == "__main__":
         "app.main:app",
         host="0.0.0.0",
         port=8000,
-        reload=settings.DEBUG,
-        log_level="debug" if settings.DEBUG else "info"
+        reload=True,
+        log_level="debug"
     )
