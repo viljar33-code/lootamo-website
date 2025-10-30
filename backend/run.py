@@ -138,9 +138,9 @@ def start_server():
         import uvicorn
         
         print("\n🌟 Lootamo Backend Server Starting...")
-        print("📍 Server URL: http://localhost:8000")
-        print("📖 API Docs: http://localhost:8000/docs")
-        print("🔧 Admin Panel: http://localhost:8000/redoc")
+        print("📍 Server URL: http://localhost:8080")
+        print("📖 API Docs: http://localhost:8080/docs")
+        print("🔧 Admin Panel: http://localhost:8080/redoc")
         print("\n⏹️  Press CTRL+C to stop the server")
         print("=" * 50)
         
@@ -148,7 +148,7 @@ def start_server():
         uvicorn.run(
             "app.main:app",
             host="0.0.0.0",
-            port=8000,
+            port=8080,
             reload=True,
             reload_dirs=["app"],
             log_level="info"

@@ -27,9 +27,9 @@ class Settings(BaseSettings):
     
     # CORS
     ALLOWED_ORIGINS: str = Field(
-        default="http://localhost:3000,http://127.0.0.1:3000,http://localhost:8080,http://127.0.0.1:8080,http://localhost:8000,http://127.0.0.1:8000,https://seal-app-qltln.ondigitalocean.app,http://seal-app-qltln.ondigitalocean.app",
-        env="ALLOWED_ORIGINS"
-    )
+    default="http://localhost:3000,http://127.0.0.1:3000,http://localhost:8080,http://127.0.0.1:8080,http://localhost:8000,http://127.0.0.1:8000,https://seal-app-gltln.ondigitalocean.app,http://seal-app-gltln.ondigitalocean.app",
+    env="ALLOWED_ORIGINS"
+)
     
     @property
     def allowed_origins_list(self) -> List[str]:

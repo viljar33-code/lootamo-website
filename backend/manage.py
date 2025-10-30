@@ -29,14 +29,14 @@ def run_server():
     """Run development server"""
     import uvicorn
     print(" Starting Lootamo Development Server...")
-    print(" Server URL: http://localhost:8000")
-    print(" API Docs: http://localhost:8000/docs")
+    print(" Server URL: http://localhost:8080")
+    print(" API Docs: http://localhost:8080/docs")
     print("\n  Press CTRL+C to stop the server")
     
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",
-        port=8000,
+        port=8080,
         reload=True,
         reload_dirs=["app"],
         log_level="info"
