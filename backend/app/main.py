@@ -95,7 +95,7 @@ app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
 print(f"Allowed CORS origins: {settings.allowed_origins_list}")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.allowed_origins_list,
+    allow_origins=["*"] if settings.ENVIRONMENT == "development" else settings.allowed_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -118,7 +118,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",
-        port=8000,
+        port=8080,
         reload=True,
         log_level="debug"
     )
