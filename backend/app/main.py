@@ -113,6 +113,11 @@ async def health_check():
     return {"status": "healthy", "version": "1.0.0"}
 
 
+@app.get("/lootamo-health")
+async def health_check():
+    return {"status": "Lootamo Is Healthy Now!", "version": "1.0.0"}
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
