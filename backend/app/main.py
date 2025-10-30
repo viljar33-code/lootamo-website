@@ -113,9 +113,9 @@ async def health_check():
     return {"status": "healthy", "version": "1.0.0"}
 
 
-@app.get("/lootamo-health")
-async def health_check():
-    return {"status": "Lootamo Is Healthy Now!", "version": "1.0.0"}
+@app.get("/demo")
+async def demo():
+    return {"test": "Auto Deploy Works Properly"}
 
 
 if __name__ == "__main__":
