@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { IoHeart, IoCart, IoMenu, IoClose } from "react-icons/io5";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { useCart } from "@/contexts/CartContext";
+import SearchDropdown from "./SearchDropdown";
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -18,34 +19,24 @@ export default function Navbar() {
   }, []);
 
   return (
-    <header className={`top-0 z-40 sticky transition-shadow ${scrolled ? "shadow-md bg-white/90 backdrop-blur-sm" : "bg-transparent"}`}>
+    <header className={`top-0 z-[60] sticky transition-shadow ${scrolled ? "shadow-md bg-white/90 backdrop-blur-sm" : "bg-transparent"}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-14 md:h-16">
           <div className="flex items-center gap-4">
             <Link href="/" className="flex items-center gap-3">
-              <Image src="/images/logo1.png" alt="Lootamo" width={120} height={16} className="sm:h-10 w-auto"/>
+              <Image src="/images/logo.png" alt="Lootamo" width={120} height={16} className="sm:h-10 w-auto"/>
               {/* <span className="font-bold text-lg text-gray-900">Lootamo</span> */}
             </Link>
 
             <nav className="hidden lg:flex items-center gap-1">
               <Link href="/products" className="px-3 py-2 rounded-md text-sm hover:bg-gray-100">All Products</Link>
-              <Link href="/deals" className="px-3 py-2 rounded-md text-sm hover:bg-gray-100">Deals</Link>
+              {/* <Link href="/" className="px-3 py-2 rounded-md text-sm hover:bg-gray-100">Deals</Link> */}
               <Link href="/categories" className="px-3 py-2 rounded-md text-sm hover:bg-gray-100">Categories</Link>
-              <Link href="/giftcards" className="px-3 py-2 rounded-md text-sm hover:bg-gray-100">Gift Cards</Link>
+              {/* <Link href="/giftcards" className="px-3 py-2 rounded-md text-sm hover:bg-gray-100">Gift Cards</Link> */}
             </nav>
           </div>
 
-          <div className="flex-1 px-4">
-            <form className="hidden md:flex items-center gap-2 bg-gray-100 rounded-md px-3 py-2">
-              <select aria-label="Category" className="bg-transparent outline-none text-sm">
-                <option>All</option>
-                <option>Games</option>
-                <option>Subscriptions</option>
-              </select>
-              <input aria-label="Search" type="search" placeholder="Search games, keys, gift cards..." className="flex-1 bg-transparent outline-none text-sm" />
-              <button type="submit" className="text-sm font-semibold">Search</button>
-            </form>
-          </div>
+          <SearchDropdown />
 
           <div className="flex items-center gap-6">
             <Link href="/wishlist" className="hidden sm:inline-flex items-center gap-1 relative">
@@ -86,7 +77,7 @@ export default function Navbar() {
                 <IoClose className="w-6 h-6" />
               </button>
             </div>
-
+        
             <nav className="mt-4 flex flex-col gap-3">
               <Link href="/products" className="block px-3 py-2 rounded-md">All Products</Link>
               <Link href="/deals" className="block px-3 py-2 rounded-md">Deals</Link>
